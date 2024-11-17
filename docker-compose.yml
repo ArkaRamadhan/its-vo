@@ -1,0 +1,170 @@
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bjb_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: QWUJkHfD
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+
+  api-gateway:
+    build: ../api-gateway
+    ports:
+      - "5000:5000"
+    depends_on:
+      - dokumen-service
+      - informasi-service
+      - kegiatan-service
+      - user-service
+      - weeklytimeline-service
+      - project-service
+    networks:
+      - app-network
+
+  dokumen-service:
+    build: ./dokumen-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=dokumen
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - ./dokumen-service:/app
+      - /go/pkg/mod:/go/pkg/mod
+      - "C:/UploadedFile:/app/UploadedFile"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  informasi-service:
+    build: ./informasi-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=informasi
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - ./informasi-service:/app
+      - /go/pkg/mod:/go/pkg/mod
+      - "C:/UploadedFile:/app/UploadedFile"
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kegiatan-service:
+    build: ./kegiatan-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=kegiatan
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - ./kegiatan-service:/app
+      - "C:/UploadedFile:/app/UploadedFile"
+    ports:
+      - "8083:8083"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  user-service:
+    build: ./user-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=user
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - /go/pkg/mod:/go/pkg/mod
+      - ./user-service:/app
+    ports:
+      - "8084:8084"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  weeklytimeline-service:
+    build: ./weeklytimeline-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=weekly_timeline
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - /go/pkg/mod:/go/pkg/mod
+      - ./weeklytimeline-service:/app
+    ports:
+      - "8085:8085"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  project-service:
+    build: ./project-service
+    environment:
+      - DATABASE_URL=${DB_URL}
+      - DATABASE_SCHEMA=project
+    volumes:
+      - ./common:/app/common
+      - ./.env:/.env
+      - /go/pkg/mod:/go/pkg/mod
+      - ./project-service:/app
+      - "C:/UploadedFile:/app/UploadedFile"
+    ports:
+      - "8086:8086"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
