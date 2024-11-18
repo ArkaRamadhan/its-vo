@@ -13,10 +13,48 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+var (
+	BorderBlack = []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+	}
+
+	centerAlignment = &excelize.Alignment{
+		Horizontal: "center",
+		Vertical:   "center",
+	}
+
+	wrapAlignment = &excelize.Alignment{
+		WrapText: true,
+	}
+
+	FontBlack = &excelize.Font{
+		Color: "000000",
+		Bold:  true,
+	}
+)
+
+type SplitType int
+
+const (
+	SplitHorizontal SplitType = iota
+	SplitVertical
+)
+
 // ExcelData adalah interface yang harus diimplementasikan oleh semua model
 type ExcelData interface {
 	ToExcelRow() []interface{}
 	GetDocType() string // Untuk menentukan tipe dokumen (SAG/ISO)
+}
+
+type CustomStyles struct {
+	StatusStyles     map[string]*excelize.Style
+	DefaultCellStyle *excelize.Style
+	SeparatorStyle   *excelize.Style
+	SeparatorLabels  map[string]string
+	AnggaranStyle    *excelize.Style
 }
 
 // ExcelColumn mendefinisikan struktur untuk setiap kolom Excel
@@ -25,6 +63,8 @@ type ExcelColumn struct {
 	Width  float64
 }
 
+type GetStatusFunc func(data interface{}) string
+
 // ExcelConfig menyimpan konfigurasi untuk ekspor Excel
 type ExcelConfig struct {
 	SheetName    string
@@ -32,6 +72,9 @@ type ExcelConfig struct {
 	Data         []ExcelData
 	FileName     string
 	IsSplitSheet bool // true jika perlu dipisah SAG/ISO
+	CustomStyles *CustomStyles
+	GetStatus    GetStatusFunc
+	SplitType    SplitType
 }
 
 func ExportToExcel(config ExcelConfig) (*excelize.File, error) {
@@ -44,6 +87,24 @@ func ExportToExcel(config ExcelConfig) (*excelize.File, error) {
 	styleHeader, err := CreateHeaderStyle(f)
 	if err != nil {
 		return nil, err
+	}
+
+	// Tambahkan pengecekan untuk SeparatorStyle
+	if config.CustomStyles != nil && config.CustomStyles.SeparatorStyle != nil {
+		styleID, err := f.NewStyle(config.CustomStyles.SeparatorStyle)
+		if err != nil {
+			return nil, err
+		}
+		// Terapkan style untuk baris pemisah SAG
+		f.SetCellValue(config.SheetName, "F2", "SAG")
+		f.SetCellStyle(config.SheetName, "A2", fmt.Sprintf("%s2", string(rune('A'+len(config.Columns)-1))), styleID)
+	}
+
+	if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {
+		styleID, _ := f.NewStyle(config.CustomStyles.DefaultCellStyle)
+		startCell := fmt.Sprintf("A%d", 3) // Mulai dari baris 3 setelah header dan pemisah
+		endCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), 3)
+		f.SetCellStyle(config.SheetName, startCell, endCell, styleID)
 	}
 
 	if config.IsSplitSheet {
@@ -61,6 +122,26 @@ func ExportToSheet(f *excelize.File, config ExcelConfig) error {
 	styleHeader, err := CreateHeaderStyle(f)
 	if err != nil {
 		return err
+	}
+
+	if config.CustomStyles != nil && config.CustomStyles.StatusStyles != nil {
+		status := config.GetStatus(config.Data[0])
+		if style, ok := config.CustomStyles.StatusStyles[status]; ok {
+			statusCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), 2)
+			styleID, err := f.NewStyle(style)
+			if err != nil {
+				return err
+			}
+			f.SetCellStyle(config.SheetName, statusCell, statusCell, styleID)
+		}
+	}
+
+	if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {
+		styleID, _ := f.NewStyle(config.CustomStyles.DefaultCellStyle)
+		// Apply to all cells in the row except status column
+		startCell := fmt.Sprintf("A%d", 2)
+		endCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-2)), 2)
+		f.SetCellStyle(config.SheetName, startCell, endCell, styleID)
 	}
 
 	if config.IsSplitSheet {
@@ -92,26 +173,42 @@ func ExportSingleSheet(f *excelize.File, config ExcelConfig, styleHeader int) (*
 		for col, value := range values {
 			cell := fmt.Sprintf("%s%d", string('A'+col), row)
 			f.SetCellValue(config.SheetName, cell, value)
+
+			// Terapkan style berdasarkan kolom status
+			if col == 2 && config.CustomStyles != nil { // Asumsikan kolom status adalah kolom ke-3 (index 2)
+				if config.GetStatus != nil {
+					status := config.GetStatus(item)
+					if style, ok := config.CustomStyles.StatusStyles[status]; ok {
+						styleID, err := f.NewStyle(style)
+						if err != nil {
+							return nil, err
+						}
+						f.SetCellStyle(config.SheetName, cell, cell, styleID)
+					}
+				}
+			} else if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {
+				// Terapkan default style untuk kolom non-status
+				styleID, err := f.NewStyle(config.CustomStyles.DefaultCellStyle)
+				if err != nil {
+					return nil, err
+				}
+				f.SetCellStyle(config.SheetName, cell, cell, styleID)
+			}
 		}
 		row++
-	}
-
-	// Apply styling
-	styleData, err := CreateDataStyle(f)
-	if err != nil {
-		return nil, err
-	}
-
-	lastRow := row - 1
-	if lastRow >= 2 {
-		lastCell := fmt.Sprintf("%s%d", string('A'+len(config.Columns)-1), lastRow)
-		f.SetCellStyle(config.SheetName, "A2", lastCell, styleData)
 	}
 
 	return f, nil
 }
 
 func ExportSplitSheet(f *excelize.File, config ExcelConfig, styleHeader int) (*excelize.File, error) {
+	if config.SplitType == SplitVertical {
+		return exportVerticalSplit(f, config, styleHeader)
+	}
+	return exportHorizontalSplit(f, config, styleHeader)
+}
+
+func exportVerticalSplit(f *excelize.File, config ExcelConfig, styleHeader int) (*excelize.File, error) {
 	// Set headers SAG (kolom kiri)
 	for i, col := range config.Columns {
 		cell := fmt.Sprintf("%s1", string('A'+i))
@@ -175,6 +272,98 @@ func ExportSplitSheet(f *excelize.File, config ExcelConfig, styleHeader int) (*e
 		}
 		f.SetCellStyle(config.SheetName, "E1", fmt.Sprintf("E%d", lastRow), styleLine)
 	}
+
+	return f, nil
+}
+
+func exportHorizontalSplit(f *excelize.File, config ExcelConfig, styleHeader int) (*excelize.File, error) {
+	// Set headers
+	for i, col := range config.Columns {
+		cell := fmt.Sprintf("%s1", string('A'+i))
+		f.SetCellValue(config.SheetName, cell, col.Header)
+		f.SetColWidth(config.SheetName, string('A'+i), string('A'+i), col.Width)
+		f.SetCellStyle(config.SheetName, cell, cell, styleHeader)
+	}
+
+	// Tambahkan separator SAG di baris 2
+	if config.CustomStyles != nil && config.CustomStyles.SeparatorStyle != nil {
+		styleID, _ := f.NewStyle(config.CustomStyles.SeparatorStyle)
+		f.SetCellValue(config.SheetName, "F2", "SAG")
+		f.SetCellStyle(config.SheetName, "A2",
+			fmt.Sprintf("%s2", string(rune('A'+len(config.Columns)-1))), styleID)
+	}
+
+	rowSAG := 3 // Mulai setelah header dan pemisah SAG
+	rowISO := 3
+	lastRowSAG := 3
+
+	// Proses data SAG
+	for _, item := range config.Data {
+		if item.GetDocType() == "SAG" {
+			values := item.ToExcelRow()
+			for col, value := range values {
+				cell := fmt.Sprintf("%s%d", string('A'+col), rowSAG)
+				f.SetCellValue(config.SheetName, cell, value)
+
+				// Terapkan style default
+				if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {
+					styleID, _ := f.NewStyle(config.CustomStyles.DefaultCellStyle)
+					f.SetCellStyle(config.SheetName, cell, cell, styleID)
+				}
+
+				// Style khusus untuk kolom anggaran
+				if col == 6 && config.CustomStyles != nil && config.CustomStyles.AnggaranStyle != nil {
+					styleID, _ := f.NewStyle(config.CustomStyles.AnggaranStyle)
+					f.SetCellStyle(config.SheetName, cell, cell, styleID)
+				}
+			}
+			rowSAG++
+			lastRowSAG = rowSAG
+		}
+	}
+
+	// Tambahkan separator ISO setelah data SAG
+	if config.CustomStyles != nil && config.CustomStyles.SeparatorStyle != nil {
+		styleID, _ := f.NewStyle(config.CustomStyles.SeparatorStyle)
+		f.SetCellValue(config.SheetName, fmt.Sprintf("F%d", lastRowSAG), "ISO")
+		f.SetCellStyle(config.SheetName,
+			fmt.Sprintf("A%d", lastRowSAG),
+			fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), lastRowSAG),
+			styleID)
+		rowISO = lastRowSAG + 1
+	}
+
+	// Proses data ISO
+	for _, item := range config.Data {
+		if item.GetDocType() == "ISO" {
+			values := item.ToExcelRow()
+			for col, value := range values {
+				cell := fmt.Sprintf("%s%d", string('A'+col), rowISO)
+				f.SetCellValue(config.SheetName, cell, value)
+
+				// Terapkan style default
+				if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {
+					styleID, _ := f.NewStyle(config.CustomStyles.DefaultCellStyle)
+					f.SetCellStyle(config.SheetName, cell, cell, styleID)
+				}
+
+				// Style khusus untuk kolom anggaran
+				if col == 6 && config.CustomStyles != nil && config.CustomStyles.AnggaranStyle != nil {
+					styleID, _ := f.NewStyle(config.CustomStyles.AnggaranStyle)
+					f.SetCellStyle(config.SheetName, cell, cell, styleID)
+				}
+			}
+			rowISO++
+		}
+	}
+
+	// Set tinggi baris
+	lastRow := max(rowISO, lastRowSAG)
+	for i := 2; i < lastRow; i++ {
+		f.SetRowHeight(config.SheetName, i, 30)
+	}
+
+	return f, nil
 
 	return f, nil
 }
@@ -624,6 +813,8 @@ func ExportAll(c *gin.Context) {
 		{"TIMELINE PROJECT", ExportTimelineProjectToExcel},
 		{"TIMELINE DESKTOP", ExportTimelineDesktopToExcel},
 		{"BERITA ACARA", ExportBeritaAcaraToExcel},
+		{"PROJECT", ExportProjectToExcel},
+		{"MEETING", ExportMeetingToExcel},
 	}
 
 	for _, sheet := range sheets {
