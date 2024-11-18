@@ -21,12 +21,12 @@ var (
 		{Type: "bottom", Color: "000000", Style: 1},
 	}
 
-	centerAlignment = &excelize.Alignment{
+	CenterAlignment = &excelize.Alignment{
 		Horizontal: "center",
 		Vertical:   "center",
 	}
 
-	wrapAlignment = &excelize.Alignment{
+	WrapAlignment = &excelize.Alignment{
 		WrapText: true,
 	}
 
