@@ -9,8 +9,11 @@ import (
 	"strings"
 	"time"
 
+	// dokumen "github.com/arkaramadhan/its-vo/dokumen-service/controllers"
+	kegiatan "github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
+
 )
 
 var (
@@ -809,12 +812,12 @@ func ExportAll(c *gin.Context) {
 		name     string
 		exporter func(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error
 	}{
-		{"BOOKING RAPAT", ExportBookingRapatToExcel},
-		{"TIMELINE PROJECT", ExportTimelineProjectToExcel},
-		{"TIMELINE DESKTOP", ExportTimelineDesktopToExcel},
+		{"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
+		{"TIMELINE PROJECT", kegiatan.ExportTimelineProjectToExcel},
+		{"TIMELINE DESKTOP", kegiatan.ExportTimelineDesktopToExcel},
 		{"BERITA ACARA", ExportBeritaAcaraToExcel},
-		{"PROJECT", ExportProjectToExcel},
-		{"MEETING", ExportMeetingToExcel},
+		{"PROJECT", project.ExportProjectToExcel},
+		{"MEETING", meeting.ExportMeetingToExcel},
 	}
 
 	for _, sheet := range sheets {

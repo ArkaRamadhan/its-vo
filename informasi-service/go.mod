@@ -3,7 +3,7 @@ module github.com/arkaramadhan/its-vo/informasi-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241114101509-65916563cdf5
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241118083829-56cc02bf9c74
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
@@ -37,7 +37,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect

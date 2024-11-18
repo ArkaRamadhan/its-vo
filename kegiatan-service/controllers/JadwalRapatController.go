@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
-	"github.com/arkaramadhan/its-vo/common/utils"
+	helper "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/models"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // Create a new event
@@ -49,7 +50,7 @@ func CreateEventRapat(c *gin.Context) {
 		return
 	}
 
-	utils.SetNotification(event.Title, startTime, "JadwalRapat") // Panggil fungsi SetNotification
+	helper.SetNotification(event.Title, startTime, "JadwalRapat") // Panggil fungsi SetNotification
 
 	if err := initializers.DB.Create(&event).Error; err != nil {
 		log.Printf("Error creating event: %v", err)
@@ -72,19 +73,24 @@ func DeleteEventRapat(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func ExportJadwalRapatToExcel(c *gin.Context) {
+func ExportJadwalRapatHandler(c *gin.Context) {
+	var f *excelize.File
+	ExportJadwalRapatToExcel(c, f, "JADWAL RAPAT", true)
+}
+
+func ExportJadwalRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalRapat
 	if err := initializers.DB.Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
-	var excelEvents []utils.ExcelEvent
+	var excelEvents []helper.ExcelEvent
 	for _, event := range events {
 		excelEvents = append(excelEvents, event) // Pastikan `event` adalah tipe yang mengimplementasikan `ExcelEvent`
 	}
 
-	config := utils.CalenderConfig{
+	config := helper.CalenderConfig{
 		SheetName:   "JADWAL RAPAT",
 		FileName:    "jadwal_rapat.xlsx",
 		Events:      excelEvents,
@@ -93,5 +99,14 @@ func ExportJadwalRapatToExcel(c *gin.Context) {
 		ColOffset:   0,
 	}
 
-	utils.ExportCalenderToExcel(c, config)
+	if f != nil {
+		return helper.ExportCalenderToSheet(f, config)
+	} else {
+		err := helper.ExportCalenderToExcel(c, config)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
+			return err
+		}
+	}
+	return nil
 }

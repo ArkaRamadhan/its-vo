@@ -7,8 +7,10 @@ import (
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/utils"
+	helper "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/models"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // Create a new event
@@ -72,19 +74,24 @@ func DeleteEventCuti(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func ExportJadwalCutiToExcel(c *gin.Context) {
+func ExportJadwalCutiHandler(c *gin.Context) {
+	var f *excelize.File
+	ExportJadwalCutiToExcel(c, f, "JADWAL CUTI", true)
+}
+
+func ExportJadwalCutiToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalCuti
 	if err := initializers.DB.Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
-	var excelEvents []utils.ExcelEvent
+	var excelEvents []helper.ExcelEvent
 	for _, event := range events {
 		excelEvents = append(excelEvents, event) // Pastikan `event` adalah tipe yang mengimplementasikan `ExcelEvent`
 	}
 
-	config := utils.CalenderConfig{
+	config := helper.CalenderConfig{
 		SheetName:   "JADWAL CUTI",
 		FileName:    "jadwal_cuti.xlsx",
 		Events:      excelEvents,
@@ -93,5 +100,14 @@ func ExportJadwalCutiToExcel(c *gin.Context) {
 		ColOffset:   0,
 	}
 
-	utils.ExportCalenderToExcel(c, config)
+	if f != nil {
+		return helper.ExportCalenderToSheet(f, config)
+	} else {
+		err := helper.ExportCalenderToExcel(c, config)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
+			return err
+		}
+	}
+	return nil
 }

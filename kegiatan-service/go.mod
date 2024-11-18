@@ -3,7 +3,7 @@ module github.com/arkaramadhan/its-vo/kegiatan-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241114101509-65916563cdf5
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241118083829-56cc02bf9c74
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0

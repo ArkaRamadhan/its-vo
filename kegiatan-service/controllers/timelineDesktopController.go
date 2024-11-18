@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
-	"github.com/arkaramadhan/its-vo/common/utils"
+	helper "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/models"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // GetEventsTimeline retrieves all timeline events
@@ -46,7 +47,7 @@ func CreateEventDesktop(c *gin.Context) {
 	}
 
 	// Panggil fungsi SetNotification
-	utils.SetNotification(event.Title, startTime, "TimelineWallpaperDesktop")
+	helper.SetNotification(event.Title, startTime, "TimelineWallpaperDesktop")
 
 	if err := initializers.DB.Create(&event).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -113,17 +114,22 @@ func DeleteResourceDesktop(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func ExportTimelineDesktopToExcel(c *gin.Context) {
+func ExportTimelineDesktopHandler(c *gin.Context) {
+	var f *excelize.File
+	ExportTimelineDesktopToExcel(c, f, "TIMELINE DESKTOP", true)
+}
+
+func ExportTimelineDesktopToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events_timeline []models.TimelineDesktop
 	if err := initializers.DB.Find(&events_timeline).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
 	var resources []models.ResourceDesktop
 	if err := initializers.DB.Find(&resources).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
 	resourceMap := make(map[uint]string)
@@ -131,12 +137,12 @@ func ExportTimelineDesktopToExcel(c *gin.Context) {
 		resourceMap[resource.ID] = resource.Name
 	}
 
-	var excelEvents []utils.ExcelEvent
+	var excelEvents []helper.ExcelEvent
 	for _, event := range events_timeline {
 		excelEvents = append(excelEvents, event) // Pastikan `event` adalah tipe yang mengimplementasikan `ExcelEvent`
 	}
 
-	config := utils.CalenderConfig{
+	config := helper.CalenderConfig{
 		SheetName:   "TIMELINE DESKTOP",
 		FileName:    "its_report_timelineDesktop.xlsx",
 		Events:      excelEvents,
@@ -146,5 +152,14 @@ func ExportTimelineDesktopToExcel(c *gin.Context) {
 		ColOffset:   0,
 	}
 
-	utils.ExportCalenderToExcel(c, config)
+	if f != nil {
+		return helper.ExportCalenderToSheet(f, config)
+	} else {
+		err := helper.ExportCalenderToExcel(c, config)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
+			return err
+		}
+	}
+	return nil
 }

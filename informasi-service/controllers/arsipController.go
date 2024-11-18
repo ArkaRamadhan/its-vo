@@ -160,6 +160,11 @@ func ArsipDelete(c *gin.Context) {
 }
 
 func ExportArsipHandler(c *gin.Context) {
+	f := excelize.NewFile()
+	ExportArsipToExcel(c, f, "ARSIP", true)
+}
+
+func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var arsip []models.Arsip
 	initializers.DB.Find(&arsip)
@@ -187,18 +192,22 @@ func ExportArsipHandler(c *gin.Context) {
 		IsSplitSheet: false,
 	}
 
-	// 4. Panggil fungsi ExportToExcel
-	f, err := helper.ExportToExcel(config)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
-		return
+	if f != nil {
+		helper.ExportToSheet(f, config)
+	} else {
+		helper.ExportToExcel(config)
 	}
 
-	// 5. Set header dan kirim file
-	fileName := "its_report_arsip.xlsx"
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/octet-stream")
-	f.Write(c.Writer)
+	if isStandAlone {
+		fileName := "its_report_beritaAcara.xlsx"
+		c.Header("Content-Disposition", "attachment; filename="+fileName)
+		c.Header("Content-Type", "application/octet-stream")
+		if err := f.Write(c.Writer); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func ImportExcelArsip(c *gin.Context) {

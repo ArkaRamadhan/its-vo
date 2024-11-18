@@ -174,6 +174,11 @@ func MemoDelete(c *gin.Context) {
 }
 
 func ExportMemoHandler(c *gin.Context) {
+	f := excelize.NewFile()
+	ExportMemoToExcel(c, f, "MEMO", true)
+}
+
+func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
     // 1. Ambil data dari database
     var memos []models.Memo
     initializers.DB.Find(&memos)
@@ -197,18 +202,22 @@ func ExportMemoHandler(c *gin.Context) {
         IsSplitSheet: true,
     }
 
-    // 4. Panggil fungsi ExportToExcel
-    f, err := helper.ExportToExcel(config)
-    if err != nil {
-        c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
-        return
-    }
+	if f != nil {
+		helper.ExportToSheet(f, config)
+	} else {
+		helper.ExportToExcel(config)
+	}
 
-    // 5. Set header dan kirim file
-    fileName := "its_report_memo.xlsx"
-    c.Header("Content-Disposition", "attachment; filename="+fileName)
-    c.Header("Content-Type", "application/octet-stream")
-    f.Write(c.Writer)
+	if isStandAlone {
+		fileName := "its_report_beritaAcara.xlsx"
+		c.Header("Content-Disposition", "attachment; filename="+fileName)
+		c.Header("Content-Type", "application/octet-stream")
+		if err := f.Write(c.Writer); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func ImportExcelMemo(c *gin.Context) {

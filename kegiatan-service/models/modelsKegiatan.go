@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	helper "github.com/arkaramadhan/its-vo/common/utils"
 
 )
 
@@ -35,6 +36,38 @@ func (i *Meeting) MarshalJSON() ([]byte, error) {
 		TanggalActual: &tanggalActualFormatted,
 		Alias:         (*Alias)(i),
 	})
+}
+
+func (mt *Meeting) ToExcelRow() []interface{} {
+	tanggalTargetStr := ""
+	tanggalActualStr := ""
+	if mt.TanggalTarget != nil {
+		tanggalTargetStr = mt.TanggalTarget.Format("2006-01-02")
+	}
+	if mt.TanggalActual != nil {
+		tanggalActualStr = mt.TanggalActual.Format("2006-01-02")
+	}
+
+	return []interface{}{
+		helper.GetValue(mt.Task),
+		helper.GetValue(mt.TindakLanjut),
+		helper.GetValue(mt.Status),
+		helper.GetValue(mt.UpdatePengerjaan),
+		helper.GetValue(mt.Pic),
+		tanggalTargetStr,
+		tanggalActualStr,
+	}
+}
+
+func (mt *Meeting) GetDocType() string {
+	return "MEETING"
+}
+
+func (m *Meeting) GetStatus() string {
+	if m.Status == nil {
+		return "" // atau nilai default lainnya
+	}
+	return *m.Status
 }
 
 type BookingRapat struct {
@@ -184,6 +217,7 @@ func (e JadwalCuti) GetAllDay() bool {
 func (e JadwalCuti) GetResourceID() uint {
 	return 0
 }
+
 type TimelineDesktop struct {
 	ID         uint   `gorm:"primaryKey" json:"id"`
 	Start      string `json:"start"`

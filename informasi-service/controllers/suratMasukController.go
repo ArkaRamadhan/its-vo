@@ -155,6 +155,11 @@ func SuratMasukDelete(c *gin.Context) {
 }
 
 func ExportSuratMasukHandler(c *gin.Context) {
+	f := excelize.NewFile()
+	ExportSuratMasukToExcel(c, f, "SURAT MASUK", true)
+}
+
+func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var surat_masuk []models.SuratMasuk
 	initializers.DB.Find(&surat_masuk)
@@ -179,18 +184,22 @@ func ExportSuratMasukHandler(c *gin.Context) {
 		IsSplitSheet: false,
 	}
 
-	// 4. Panggil fungsi ExportToExcel
-	f, err := helper.ExportToExcel(config)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
-		return
+	if f != nil {
+		helper.ExportToSheet(f, config)
+	} else {
+		helper.ExportToExcel(config)
 	}
 
-	// 5. Set header dan kirim file
-	fileName := "its_report_suratmasuk.xlsx"
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/octet-stream")
-	f.Write(c.Writer)
+	if isStandAlone {
+		fileName := "its_report_suratmasuk.xlsx"
+		c.Header("Content-Disposition", "attachment; filename="+fileName)
+		c.Header("Content-Type", "application/octet-stream")
+		if err := f.Write(c.Writer); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Fungsi untuk mengonversi serial Excel ke tanggal

@@ -6,10 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	helper "github.com/arkaramadhan/its-vo/common/utils"
@@ -350,25 +348,25 @@ func ImportExcelProject(c *gin.Context) {
 		}
 
 		// Membersihkan string anggaran dari karakter non-numerik
-		rawAnggaran := getStringOrNil(getColumn(row, 7))
+		rawAnggaran := (getColumn(row, 7))
 		var anggaranCleaned *string
-		if rawAnggaran != nil {
-			cleanedAnggaran := cleanNumericString(*rawAnggaran)
+		if rawAnggaran != "" {
+			cleanedAnggaran := helper.CleanNumericString(rawAnggaran)
 			anggaranCleaned = &cleanedAnggaran
 		}
 
 		project := models.Project{
-			KodeProject:     getStringOrNil(getColumn(row, 1)),
-			JenisPengadaan:  getStringOrNil(getColumn(row, 2)),
-			NamaPengadaan:   getStringOrNil(getColumn(row, 3)),
-			DivInisiasi:     getStringOrNil(getColumn(row, 4)),
-			Bulan:           parseDateOrNil(getStringOrNil(getColumn(row, 5))),
-			SumberPendanaan: getStringOrNil(getColumn(row, 6)),
+			KodeProject:     helper.GetStringOrNil(getColumn(row, 1)),
+			JenisPengadaan:  helper.GetStringOrNil(getColumn(row, 2)),
+			NamaPengadaan:   helper.GetStringOrNil(getColumn(row, 3)),
+			DivInisiasi:     helper.GetStringOrNil(getColumn(row, 4)),
+			Bulan:           helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 5))),
+			SumberPendanaan: helper.GetStringOrNil(getColumn(row, 6)),
 			Anggaran:        anggaranCleaned,
-			NoIzin:          getStringOrNil(getColumn(row, 8)),
-			TanggalIzin:     parseDateOrNil(getStringOrNil(getColumn(row, 9))),
-			TanggalTor:      parseDateOrNil(getStringOrNil(getColumn(row, 10))),
-			Pic:             getStringOrNil(getColumn(row, 11)),
+			NoIzin:          helper.GetStringOrNil(getColumn(row, 8)),
+			TanggalIzin:     helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 9))),
+			TanggalTor:      helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 10))),
+			Pic:             helper.GetStringOrNil(getColumn(row, 11)),
 			CreateBy:        c.MustGet("username").(string),
 		}
 
@@ -393,14 +391,6 @@ func getColumn(row []string, index int) string {
 		return ""
 	}
 	return row[index]
-}
-
-// Helper function to return nil if the string is empty
-func getStringOrNil(value string) *string {
-	if value == "" {
-		return nil
-	}
-	return &value
 }
 
 // Helper function to parse date from various formats
@@ -440,288 +430,79 @@ func parseDate(dateStr string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("no valid date format found")
 }
 
-// Fungsi untuk membersihkan string dari karakter non-numerik
-func cleanNumericString(input string) string {
-	return strings.Map(func(r rune) rune {
-		if unicode.IsDigit(r) {
-			return r
-		}
-		return -1
-	}, input)
-}
-
-// Helper function to parse date or return nil if input is nil
-func parseDateOrNil(dateStr *string) *time.Time {
-	if dateStr == nil {
-		return nil
-	}
-	parsedDate, err := parseDate(*dateStr)
-	if err != nil {
-		return nil
-	}
-	return &parsedDate
-}
-
-func exportProjectToExcel(projects []models.Project) (*excelize.File, error) {
-	// Create a new Excel file
+func ExportProjectHandler(c *gin.Context) {
 	f := excelize.NewFile()
 
-	// Create sheets
-	sheetName := "PROJECT"
-	f.NewSheet(sheetName)
-
-	// Set header for SAG (left column)
-	f.SetCellValue(sheetName, "A1", "Kode Project")
-	f.SetCellValue(sheetName, "B1", "Jenis Pengadaan")
-	f.SetCellValue(sheetName, "C1", "Nama Pengadaan")
-	f.SetCellValue(sheetName, "D1", "Divisi Inisiasi")
-	f.SetCellValue(sheetName, "E1", "Bulan")
-	f.SetCellValue(sheetName, "F1", "Sumber Pendanaan")
-	f.SetCellValue(sheetName, "G1", "Anggaran")
-	f.SetCellValue(sheetName, "H1", "No Izin")
-	f.SetCellValue(sheetName, "I1", "Tgl Izin")
-	f.SetCellValue(sheetName, "J1", "Tgl TOR")
-	f.SetCellValue(sheetName, "K1", "Pic")
-	f.SetCellValue(sheetName, "F2", "SAG")
-
-	f.DeleteSheet("Sheet1")
-
-	styleHeader, err := f.NewStyle(&excelize.Style{
-		Fill:      excelize.Fill{Type: "pattern", Color: []string{"6EB6F8"}, Pattern: 1},
-		Font:      &excelize.Font{Bold: true, Color: "000000", VertAlign: "center"},
-		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
-		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	err = f.SetCellStyle("PROJECT", fmt.Sprintf("A1"), fmt.Sprintf("K1"), styleHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set style for column B
-	styleLine, err := f.NewStyle(&excelize.Style{
-		Fill:      excelize.Fill{Type: "pattern", Color: []string{"000000"}, Pattern: 1},
-		Font:      &excelize.Font{Bold: true, Color: "FFFFFF", VertAlign: "center"},
-		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
-		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	err = f.SetCellStyle("PROJECT", fmt.Sprintf("A2"), fmt.Sprintf("K2"), styleLine)
-	if err != nil {
-		return nil, err
-	}
-
-	// Initialize row counters
-	rowIndex := 3
-	lastRowSAG := 3
-
-	styleAll, err := f.NewStyle(&excelize.Style{
-		Alignment: &excelize.Alignment{WrapText: true},
-		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Loop through projects
-	for _, project := range projects {
-		// Dereference pointers if not nil
-		var kodeProject, jenisPengadaan, namaPengadaan, divInisiasi, bulan, sumberPendanaan, noIzin, tanggalIzin, tanggalTor, pic string
-		if project.KodeProject != nil {
-			kodeProject = *project.KodeProject
-		}
-		if project.JenisPengadaan != nil {
-			jenisPengadaan = *project.JenisPengadaan
-		}
-		if project.NamaPengadaan != nil {
-			namaPengadaan = *project.NamaPengadaan
-		}
-		if project.DivInisiasi != nil {
-			divInisiasi = *project.DivInisiasi
-		}
-		if project.Bulan != nil {
-			bulan = project.Bulan.Format("Jan-06")
-		}
-		if project.SumberPendanaan != nil {
-			sumberPendanaan = *project.SumberPendanaan
-		}
-		if project.NoIzin != nil {
-			noIzin = *project.NoIzin
-		}
-		if project.TanggalIzin != nil {
-			tanggalIzin = project.TanggalIzin.Format("2006-01-02")
-		}
-		if project.TanggalTor != nil {
-			tanggalTor = project.TanggalTor.Format("2006-01-02")
-		}
-		if project.Pic != nil {
-			pic = *project.Pic
-		}
-
-		// Split NoMemo to get memo type
-		parts := strings.Split(*project.KodeProject, "/")
-		if len(parts) > 1 && parts[1] == "ITS-SAG" {
-			// Fill SAG column (left)
-			f.SetCellValue("PROJECT", fmt.Sprintf("A%d", rowIndex), kodeProject)
-			f.SetCellValue("PROJECT", fmt.Sprintf("B%d", rowIndex), jenisPengadaan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("C%d", rowIndex), namaPengadaan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("D%d", rowIndex), divInisiasi)
-			f.SetCellValue("PROJECT", fmt.Sprintf("E%d", rowIndex), bulan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("F%d", rowIndex), sumberPendanaan)
-
-			if project.Anggaran != nil {
-				anggaran, err := strconv.ParseInt(*project.Anggaran, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				formattedAnggaran := fmt.Sprintf("Rp. %d", anggaran)
-				f.SetCellValue("PROJECT", fmt.Sprintf("G%d", rowIndex), formattedAnggaran)
-				styleAnggaran, err := f.NewStyle(&excelize.Style{
-					NumFmt: 3,
-				})
-				if err != nil {
-					return nil, err
-				}
-				err = f.SetCellStyle("PROJECT", fmt.Sprintf("G%d", rowIndex), fmt.Sprintf("G%d", rowIndex), styleAnggaran)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			f.SetCellValue("PROJECT", fmt.Sprintf("H%d", rowIndex), noIzin)
-			f.SetCellValue("PROJECT", fmt.Sprintf("I%d", rowIndex), tanggalIzin)
-			f.SetCellValue("PROJECT", fmt.Sprintf("J%d", rowIndex), tanggalTor)
-			f.SetCellValue("PROJECT", fmt.Sprintf("K%d", rowIndex), pic)
-			err = f.SetCellStyle("PROJECT", fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), styleAll)
-			if err != nil {
-				return nil, err
-			}
-			rowIndex++
-			lastRowSAG = rowIndex
-		}
-
-		if len(parts) > 1 && parts[1] == "ITS-ISO" {
-			rowISO := rowIndex + 1
-			// Fill ISO column (right)
-			f.SetCellValue("PROJECT", fmt.Sprintf("A%d", rowISO), kodeProject)
-			f.SetCellValue("PROJECT", fmt.Sprintf("B%d", rowISO), jenisPengadaan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("C%d", rowISO), namaPengadaan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("D%d", rowISO), divInisiasi)
-			f.SetCellValue("PROJECT", fmt.Sprintf("E%d", rowISO), bulan)
-			f.SetCellValue("PROJECT", fmt.Sprintf("F%d", rowISO), sumberPendanaan)
-
-			if project.Anggaran != nil {
-				anggaran, err := strconv.ParseInt(*project.Anggaran, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				formattedAnggaran := fmt.Sprintf("Rp. %d", anggaran)
-				f.SetCellValue("PROJECT", fmt.Sprintf("G%d", rowISO), formattedAnggaran)
-				styleAnggaran, err := f.NewStyle(&excelize.Style{
-					NumFmt: 3,
-				})
-				if err != nil {
-					return nil, err
-				}
-				err = f.SetCellStyle("PROJECT", fmt.Sprintf("G%d", rowISO), fmt.Sprintf("G%d", rowISO), styleAnggaran)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			f.SetCellValue("PROJECT", fmt.Sprintf("H%d", rowISO), noIzin)
-			f.SetCellValue("PROJECT", fmt.Sprintf("I%d", rowISO), tanggalIzin)
-			f.SetCellValue("PROJECT", fmt.Sprintf("J%d", rowISO), tanggalTor)
-			f.SetCellValue("PROJECT", fmt.Sprintf("K%d", rowISO), pic)
-			err = f.SetCellStyle("PROJECT", fmt.Sprintf("A%d", rowISO), fmt.Sprintf("K%d", rowISO), styleAll)
-			if err != nil {
-				return nil, err
-			}
-			rowIndex++
-		}
-	}
-
-	for i := 3; i < lastRowSAG; i++ {
-		f.SetRowHeight("PROJECT", i, 30)
-	}
-
-	// Set black line after SAG data is generated
-	styleLine, err = f.NewStyle(&excelize.Style{
-		Fill:      excelize.Fill{Type: "pattern", Color: []string{"000000"}, Pattern: 1},
-		Font:      &excelize.Font{Bold: true, Color: "FFFFFF", VertAlign: "center"},
-		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
-		Border: []excelize.Border{
-			{Type: "left", Color: "000000", Style: 1},
-			{Type: "right", Color: "000000", Style: 1},
-			{Type: "top", Color: "000000", Style: 1},
-			{Type: "bottom", Color: "000000", Style: 1},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	f.SetCellValue("PROJECT", fmt.Sprintf("F%d", lastRowSAG), "ISO")
-	err = f.SetCellStyle("PROJECT", fmt.Sprintf("A%d", lastRowSAG), fmt.Sprintf("K%d", lastRowSAG), styleLine)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set column widths after all data is filled
-	f.SetColWidth("PROJECT", "A", "A", 30)
-	f.SetColWidth("PROJECT", "B", "B", 15)
-	f.SetColWidth("PROJECT", "C", "C", 35)
-	f.SetColWidth("PROJECT", "D", "D", 22)
-	f.SetColWidth("PROJECT", "E", "E", 15)
-	f.SetColWidth("PROJECT", "F", "F", 20)
-	f.SetColWidth("PROJECT", "G", "G", 20)
-	f.SetColWidth("PROJECT", "H", "H", 23)
-	f.SetColWidth("PROJECT", "I", "I", 22)
-	f.SetColWidth("PROJECT", "J", "J", 20)
-	f.SetColWidth("PROJECT", "K", "K", 16)
-
-	return f, nil
+	ExportProjectToExcel(c, f, "PROJECT", true)
 }
 
-// Handler untuk melakukan export Excel dengan Gin
-func ExportProjectHandler(c *gin.Context) {
-	// Data memo contoh
+func ExportProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
+	// 1. Ambil data dari database
 	var projects []models.Project
 	initializers.DB.Find(&projects)
 
-	// Buat file Excel
-	f, err := exportProjectToExcel(projects)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "gagal mengekspor data ke Excel")
-		return
+	// 2. Konversi ke interface ExcelData
+	var excelData []helper.ExcelData
+	for _, p := range projects {
+		excelData = append(excelData, &p)
 	}
 
-	// Set nama file dan header untuk download
-	fileName := fmt.Sprintf("its_report_project.xlsx")
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/octet-stream")
-
-	// Simpan file Excel ke dalam buffer
-	if err := f.Write(c.Writer); err != nil {
-		c.String(http.StatusInternalServerError, "gagal menyimpan file Excel")
+	// 3. Siapkan konfigurasi
+	config := helper.ExcelConfig{
+		SheetName: "PROJECT",
+		Columns: []helper.ExcelColumn{
+			{Header: "Kode Project", Width: 38},
+			{Header: "Jenis Pengadaan", Width: 27},
+			{Header: "Nama Pengadaan", Width: 40},
+			{Header: "Divisi Inisiasi", Width: 20},
+			{Header: "Bulan", Width: 10},
+			{Header: "Sumber Pendanaan", Width: 20},
+			{Header: "Anggaran", Width: 20},
+			{Header: "No Izin", Width: 23},
+			{Header: "Tgl Izin", Width: 14},
+			{Header: "Tgl TOR", Width: 14},
+			{Header: "Pic", Width: 16},
+		},
+		Data:         excelData,
+		IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitHorizontal,
+		CustomStyles: &helper.CustomStyles{
+			SeparatorLabels: map[string]string{
+				"ITS-SAG": "SAG",
+				"ITS-ISO": "ISO",
+			},
+			SeparatorStyle: &excelize.Style{
+				Fill:      excelize.Fill{Type: "pattern", Color: []string{"000000"}, Pattern: 1},
+				Font:      &excelize.Font{Bold: true, Color: "FFFFFF", VertAlign: "center"},
+				Alignment: helper.CenterAlignment,
+				Border:    helper.BorderBlack,
+			},
+			DefaultCellStyle: &excelize.Style{
+				Alignment: helper.WrapAlignment,
+				Border:    helper.BorderBlack,
+			},
+			AnggaranStyle: &excelize.Style{
+				NumFmt: 3,
+				Border: helper.BorderBlack,
+			},
+		},
 	}
+
+	if f != nil {
+		helper.ExportToSheet(f, config)
+	} else {
+		helper.ExportToExcel(config)
+	}
+
+	if isStandAlone {
+		fileName := "its_report_beritaAcara.xlsx"
+		c.Header("Content-Disposition", "attachment; filename="+fileName)
+		c.Header("Content-Type", "application/octet-stream")
+		if err := f.Write(c.Writer); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

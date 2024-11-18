@@ -3,7 +3,7 @@ module github.com/arkaramadhan/its-vo/user-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241114101509-65916563cdf5
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241118083829-56cc02bf9c74
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0

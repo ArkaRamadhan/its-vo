@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
-	"github.com/arkaramadhan/its-vo/common/utils"
+	helper "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/models"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 )
 
 // Create a new event
@@ -60,7 +61,7 @@ func CreateEventBookingRapat(c *gin.Context) {
 	}
 
 	// Panggil fungsi SetNotification setelah event berhasil disimpan
-	utils.SetNotification(event.Title, startTime, "BookingRapat")
+	helper.SetNotification(event.Title, startTime, "BookingRapat")
 
 	// Cek bentrok, kecualikan event yang sedang dibuat
 	var conflictingEvents []models.BookingRapat
@@ -105,27 +106,40 @@ func DeleteEventBookingRapat(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func ExportBookingRapatToExcel(c *gin.Context) {
+func ExportBookingRapatHandler(c *gin.Context) {
+	var f *excelize.File
+	ExportBookingRapatToExcel(c, f, "BOOKING RAPAT", true)
+}
+
+func ExportBookingRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.BookingRapat
 	if err := initializers.DB.Where("status = ?", "acc").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return err
 	}
 
-	var excelEvents []utils.ExcelEvent
+	var excelEvents []helper.ExcelEvent
 	for _, event := range events {
 		excelEvents = append(excelEvents, event) // Pastikan `event` adalah tipe yang mengimplementasikan `ExcelEvent`
 	}
 
-	config := utils.CalenderConfig{
-		SheetName:   "JADWAL RAPAT",
-		FileName:    "jadwal_rapat.xlsx",
+	config := helper.CalenderConfig{
+		SheetName:   "BOOKING RAPAT",
+		FileName:    "bookingRapat.xlsx",
 		Events:      excelEvents,
 		UseResource: false,
 		RowOffset:   0,
 		ColOffset:   0,
 	}
 
-	utils.ExportCalenderToExcel(c, config)
+	if f != nil {
+		return helper.ExportCalenderToSheet(f, config)
+	} else {
+		err := helper.ExportCalenderToExcel(c, config)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Gagal mengekspor data ke Excel: "+err.Error())
+			return err
+		}
+	}
+	return nil
 }
-

@@ -2,7 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
+
+	helper "github.com/arkaramadhan/its-vo/common/utils"
+
 )
 
 type Project struct {
@@ -63,4 +67,41 @@ func (p *Project) MarshalJSON() ([]byte, error) {
 		Bulan:       bulanFormatted,
 		Alias:       (*Alias)(p),
 	})
+}
+
+func (p *Project) ToExcelRow() []interface{} {
+	tanggalIzinStr := ""
+	tanggalTorStr := ""
+	bulanStr := ""
+	if p.TanggalIzin != nil {
+		tanggalIzinStr = p.TanggalIzin.Format("2006-01-02")
+	}
+	if p.TanggalTor != nil {
+		tanggalTorStr = p.TanggalTor.Format("2006-01-02")
+	}
+	if p.Bulan != nil {
+		bulanStr = p.Bulan.Format("01/06")
+	}
+
+	return []interface{}{
+		helper.GetValue(p.KodeProject),
+		helper.GetValue(p.JenisPengadaan),
+		helper.GetValue(p.NamaPengadaan),
+		helper.GetValue(p.DivInisiasi),
+		bulanStr,
+		helper.GetValue(p.SumberPendanaan),
+		helper.GetValue(p.Anggaran),
+		helper.GetValue(p.NoIzin),
+		tanggalIzinStr,
+		tanggalTorStr,
+		helper.GetValue(p.Pic),
+	}
+}
+
+func (p *Project) GetDocType() string {
+	kodeProject := helper.GetValue(p.KodeProject)
+	if strings.Contains(kodeProject, "ITS-SAG") {
+		return "SAG"
+	}
+	return "ISO"
 }

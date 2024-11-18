@@ -47,25 +47,25 @@ func main() {
 	r.GET("/resourceDesktop", controllers.GetResourcesDesktop)
 	r.POST("/resourceDesktop", controllers.CreateResourceDesktop)
 	r.DELETE("/resourceDesktop/:id", controllers.DeleteResourceDesktop)
-	r.GET("/exportTimelineDesktop", controllers.ExportTimelineDesktopToExcel)
+	r.GET("/exportTimelineDesktop", controllers.ExportTimelineDesktopHandler)
 
 	// ********** Route Booking Rapat ********** //
 	r.GET("/booking-rapat", controllers.GetEventsBookingRapat)
 	r.POST("/booking-rapat", controllers.CreateEventBookingRapat)
 	r.DELETE("/booking-rapat/:id", controllers.DeleteEventBookingRapat)
-	r.GET("/exportBookingRapat", controllers.ExportBookingRapatToExcel)
+	r.GET("/exportBookingRapat", controllers.ExportBookingRapatHandler)
 
 	// ********** Route Jadwal Rapat ********** //
 	r.GET("/jadwal-rapat", controllers.GetEventsRapat)
 	r.POST("/jadwal-rapat", controllers.CreateEventRapat)
 	r.DELETE("/jadwal-rapat/:id", controllers.DeleteEventRapat)
-	r.GET("/exportRapat", controllers.ExportJadwalRapatToExcel)
+	r.GET("/exportRapat", controllers.ExportJadwalRapatHandler)
 
 	// ********** Route Jadwal Cuti ********** //
 	r.GET("/jadwal-cuti", controllers.GetEventsCuti)
 	r.POST("/jadwal-cuti", controllers.CreateEventCuti)
 	r.DELETE("/jadwal-cuti/:id", controllers.DeleteEventCuti)
-	r.GET("/exportCuti", controllers.ExportJadwalCutiToExcel)
+	r.GET("/exportCuti", controllers.ExportJadwalCutiHandler)
 
 	// ********** Route Meeting ********** //
 	r.GET("/meetings", controllers.MeetingIndex)
@@ -73,7 +73,7 @@ func main() {
 	r.GET("/meetings/:id", controllers.MeetingShow)
 	r.PUT("/meetings/:id", controllers.MeetingUpdate)
 	r.DELETE("/meetings/:id", controllers.MeetingDelete)
-	r.GET("/exportMeeting", controllers.CreateExcelMeeting)
+	r.GET("/exportMeeting", controllers.ExportMeetingHandler)
 	r.POST("/uploadMeeting", controllers.ImportExcelMeeting)
 
 	r.POST("/uploadFileMeeting", controllers.UploadHandlerMeeting)
