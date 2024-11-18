@@ -35,7 +35,7 @@ func GetStringOrNil(value string) *string {
 	return &value
 }
 
-func cleanNumericString(input string) string {
+func CleanNumericString(input string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsDigit(r) {
 			return r
@@ -44,7 +44,7 @@ func cleanNumericString(input string) string {
 	}, input)
 }
 
-func parseDate(dateStr string) (time.Time, error) {
+func ParseDateImport(dateStr string) (time.Time, error) {
 	dateFormats := []string{
 		"2 January 2006",
 		"02-06",
@@ -81,11 +81,11 @@ func parseDate(dateStr string) (time.Time, error) {
 }
 
 // Helper function to parse date or return nil if input is nil
-func parseDateOrNil(dateStr *string) *time.Time {
+func ParseDateOrNil(dateStr *string) *time.Time {
 	if dateStr == nil {
 		return nil
 	}
-	parsedDate, err := parseDate(*dateStr)
+	parsedDate, err := ParseDateImport(*dateStr)
 	if err != nil {
 		return nil
 	}
