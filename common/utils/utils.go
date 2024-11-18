@@ -12,12 +12,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-
 )
 
 func GetColumn(row []string, index int) string {
@@ -33,6 +33,63 @@ func GetStringOrNil(value string) *string {
 		return nil
 	}
 	return &value
+}
+
+func cleanNumericString(input string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsDigit(r) {
+			return r
+		}
+		return -1
+	}, input)
+}
+
+func parseDate(dateStr string) (time.Time, error) {
+	dateFormats := []string{
+		"2 January 2006",
+		"02-06",
+		"2-January-2006",
+		"2006-01-02",
+		"02-01-2006",
+		"01/02/2006",
+		"2006.01.02",
+		"02/01/2006",
+		"Jan 2, 06",
+		"Jan 2, 2006",
+		"01/02/06",
+		"02/01/06",
+		"06/02/01",
+		"06/01/02",
+		"06-Jan-02",
+		"01/06",
+		"02/06",
+		"Jan-06", // Menambahkan format ini untuk mengenali "Feb-24" sebagai "Feb-2024"
+	}
+
+	// Menambahkan logika untuk menangani format "Feb-24"
+	if strings.Contains(dateStr, "-") && len(dateStr) == 5 {
+		dateStr = dateStr[:3] + "20" + dateStr[4:]
+	}
+
+	for _, format := range dateFormats {
+		parsedDate, err := time.Parse(format, dateStr)
+		if err == nil {
+			return parsedDate, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("no valid date format found")
+}
+
+// Helper function to parse date or return nil if input is nil
+func parseDateOrNil(dateStr *string) *time.Time {
+	if dateStr == nil {
+		return nil
+	}
+	parsedDate, err := parseDate(*dateStr)
+	if err != nil {
+		return nil
+	}
+	return &parsedDate
 }
 
 func RespondError(c *gin.Context, code int, msg string) {
