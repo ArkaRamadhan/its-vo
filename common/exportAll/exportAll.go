@@ -38,7 +38,7 @@ func ExportAll(c *gin.Context) {
 		{"SURAT KELUAR", informasi.ExportSuratKeluarToExcel},
 		{"SURAT MASUK", informasi.ExportSuratMasukToExcel},
 
-		{"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
+		// {"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
 		{"JADWAL CUTI", kegiatan.ExportJadwalCutiToExcel},
 		{"JADWAL RAPAT", kegiatan.ExportJadwalRapatToExcel},
 		{"MEETING", kegiatan.ExportMeetingToExcel},
