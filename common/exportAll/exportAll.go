@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
-	// informasi "github.com/arkaramadhan/its-vo/informasi-service/controllers"
-	// weekly "github.com/arkaramadhan/its-vo/weeklyTimeline-service/controllers"
-	// project "github.com/arkaramadhan/its-vo/project-service/controllers"
+	informasi "github.com/arkaramadhan/its-vo/informasi-service/controllers"
+	weekly "github.com/arkaramadhan/its-vo/weeklyTimeline-service/controllers"
+	project "github.com/arkaramadhan/its-vo/project-service/controllers"
 	dokumen "github.com/arkaramadhan/its-vo/dokumen-service/controllers"
-	// kegiatan "github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
+	kegiatan "github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 
