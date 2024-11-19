@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	// dokumen "github.com/arkaramadhan/its-vo/dokumen-service/controllers"
-	kegiatan "github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 
@@ -365,8 +363,6 @@ func exportHorizontalSplit(f *excelize.File, config ExcelConfig, styleHeader int
 	for i := 2; i < lastRow; i++ {
 		f.SetRowHeight(config.SheetName, i, 30)
 	}
-
-	return f, nil
 
 	return f, nil
 }
@@ -798,44 +794,3 @@ func setMonthData(f *excelize.File, sheet, month string, rowOffset, colOffset in
 	return nil
 }
 
-func ExportAll(c *gin.Context) {
-	f := excelize.NewFile()
-	defer func() {
-		if err := f.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	f.DeleteSheet("Sheet1")
-
-	sheets := []struct {
-		name     string
-		exporter func(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error
-	}{
-		{"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
-		{"TIMELINE PROJECT", kegiatan.ExportTimelineProjectToExcel},
-		{"TIMELINE DESKTOP", kegiatan.ExportTimelineDesktopToExcel},
-		{"BERITA ACARA", ExportBeritaAcaraToExcel},
-		{"PROJECT", project.ExportProjectToExcel},
-		{"MEETING", meeting.ExportMeetingToExcel},
-	}
-
-	for _, sheet := range sheets {
-		if err := sheet.exporter(c, f, sheet.name, false); err != nil {
-			c.JSON(500, gin.H{"error": fmt.Sprintf("Error exporting %s: %v", sheet.name, err)})
-			return
-		}
-	}
-
-	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
-		c.JSON(500, gin.H{"error": fmt.Sprintf("Error writing to buffer: %v", err)})
-		return
-	}
-
-	fileName := "its_report_all.xlsx"
-	c.Header("Content-Description", "File Transfer")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Data(200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf.Bytes())
-}

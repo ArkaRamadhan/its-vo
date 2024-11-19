@@ -3,8 +3,8 @@ module github.com/arkaramadhan/its-vo/common
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241118083829-56cc02bf9c74
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241118083829-56cc02bf9c74
+	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241118090558-288ec9f3958c
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241118090558-288ec9f3958c
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
@@ -15,6 +15,9 @@ require (
 )
 
 require (
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241118090558-288ec9f3958c // indirect
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241118090558-288ec9f3958c // indirect
+	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241119013935-f83199b16327 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
