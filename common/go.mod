@@ -3,8 +3,11 @@ module github.com/arkaramadhan/its-vo/common
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241118090558-288ec9f3958c
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241118090558-288ec9f3958c
+	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241119025020-c2bb93839afe
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241119025020-c2bb93839afe
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241119025020-c2bb93839afe
+	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241119025020-c2bb93839afe
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
@@ -15,19 +18,20 @@ require (
 )
 
 require (
-	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241118090558-288ec9f3958c // indirect
-	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241118090558-288ec9f3958c // indirect
-	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241119013935-f83199b16327 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
+	github.com/gin-contrib/sessions v1.0.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/gorilla/context v1.1.2 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gorilla/sessions v1.2.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
