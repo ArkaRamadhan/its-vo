@@ -34,19 +34,19 @@ func ExportAll(c *gin.Context) {
 		{"SK", dokumen.ExportSkToExcel},
 		{"SURAT", dokumen.ExportSuratToExcel},
 
-		// {"ARSIP", informasi.ExportArsipToExcel},
-		// {"SURAT KELUAR", informasi.ExportSuratKeluarToExcel},
-		// {"SURAT MASUK", informasi.ExportSuratMasukToExcel},
+		{"ARSIP", informasi.ExportArsipToExcel},
+		{"SURAT KELUAR", informasi.ExportSuratKeluarToExcel},
+		{"SURAT MASUK", informasi.ExportSuratMasukToExcel},
 
-		// {"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
-		// {"JADWAL CUTI", kegiatan.ExportJadwalCutiToExcel},
-		// {"JADWAL RAPAT", kegiatan.ExportJadwalRapatToExcel},
-		// {"MEETING", kegiatan.ExportMeetingToExcel},
-		// {"TIMELINE DESKTOP", kegiatan.ExportTimelineDesktopToExcel},
+		{"BOOKING RAPAT", kegiatan.ExportBookingRapatToExcel},
+		{"JADWAL CUTI", kegiatan.ExportJadwalCutiToExcel},
+		{"JADWAL RAPAT", kegiatan.ExportJadwalRapatToExcel},
+		{"MEETING", kegiatan.ExportMeetingToExcel},
+		{"TIMELINE DESKTOP", kegiatan.ExportTimelineDesktopToExcel},
 
-		// {"PROJECT", project.ExportProjectToExcel},
+		{"PROJECT", project.ExportProjectToExcel},
 
-		// {"TIMELINE PROJECT", weekly.ExportTimelineProjectToExcel},
+		{"TIMELINE PROJECT", weekly.ExportTimelineProjectToExcel},
 	}
 
 	for _, sheet := range sheets {
