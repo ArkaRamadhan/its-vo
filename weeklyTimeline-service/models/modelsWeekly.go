@@ -24,6 +24,32 @@ type ResourceProject struct {
 	ParentID uint   `json:"parent_id"`
 }
 
+func (e TimelineProject) GetTitle() string {
+	return e.Title
+}
+
+func (e TimelineProject) GetStart() time.Time {
+	t, _ := time.Parse("2006-01-02 15:04:05", e.Start) // Tambahkan penanganan error yang sesuai
+	return t
+}
+
+func (e TimelineProject) GetEnd() time.Time {
+	t, _ := time.Parse("2006-01-02 15:04:05", e.End) // Tambahkan penanganan error yang sesuai
+	return t
+}
+
+func (e TimelineProject) GetColor() string {
+	return e.BgColor
+}
+
+func (e TimelineProject) GetResourceID() uint {
+	return uint(e.ResourceId)
+}
+
+func (e TimelineProject) GetAllDay() bool {
+	return false
+}
+
 type MeetingSchedule struct {
 	ID        uint       `gorm:"primaryKey"`
 	CreatedAt *time.Time `gorm:"autoCreateTime"`

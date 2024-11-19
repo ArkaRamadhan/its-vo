@@ -60,7 +60,7 @@ func main() {
 	r.GET("/resourceProject", controllers.GetResourcesProject)
 	r.POST("/resourceProject", controllers.CreateResourceProject)
 	r.DELETE("/resourceProject/:id", controllers.DeleteResourceProject)
-	r.GET("/exportTimelineProject", controllers.ExportTimelineProjectToExcel)
+	r.GET("/exportTimelineProject", controllers.ExportTimelineProjectHandler)
 
 	r.Run(":8085")
 }
