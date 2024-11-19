@@ -4,7 +4,7 @@
 services=("dokumen-service" "informasi-service" "kegiatan-service" "user-service" "weeklyTimeline-service" "project-service")
 
 # Versi baru yang ingin diupgrade
-new_version="56cc02bf9c74"
+new_version="6b70fcb0f543"
 
 # Loop melalui semua service dan upgrade package
 for service in "${services[@]}"

@@ -80,7 +80,7 @@ func ExportJadwalRapatHandler(c *gin.Context) {
 
 func ExportJadwalRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalRapat
-	if err := initializers.DB.Find(&events).Error; err != nil {
+	if err := initializers.DB.Table("kegiatan.jadwal_rapats").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}

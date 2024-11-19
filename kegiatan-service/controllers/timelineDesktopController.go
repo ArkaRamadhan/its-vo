@@ -121,13 +121,13 @@ func ExportTimelineDesktopHandler(c *gin.Context) {
 
 func ExportTimelineDesktopToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events_timeline []models.TimelineDesktop
-	if err := initializers.DB.Find(&events_timeline).Error; err != nil {
+	if err := initializers.DB.Table("kegiatan.timeline_desktops").Find(&events_timeline).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}
 
 	var resources []models.ResourceDesktop
-	if err := initializers.DB.Find(&resources).Error; err != nil {
+	if err := initializers.DB.Table("kegiatan.resource_desktops").Find(&resources).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}

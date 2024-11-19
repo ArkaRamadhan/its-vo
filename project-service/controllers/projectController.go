@@ -439,7 +439,7 @@ func ExportProjectHandler(c *gin.Context) {
 func ExportProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var projects []models.Project
-	initializers.DB.Find(&projects)
+	initializers.DB.Table("project.projects").Find(&projects)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

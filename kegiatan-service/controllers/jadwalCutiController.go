@@ -81,7 +81,7 @@ func ExportJadwalCutiHandler(c *gin.Context) {
 
 func ExportJadwalCutiToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalCuti
-	if err := initializers.DB.Find(&events).Error; err != nil {
+	if err := initializers.DB.Table("kegiatan.jadwal_cutis").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}

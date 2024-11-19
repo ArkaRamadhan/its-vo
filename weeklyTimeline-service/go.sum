@@ -10,6 +10,16 @@ github.com/arkaramadhan/its-vo/common v0.0.0-20241118083447-3e7928d3a430 h1:HpBi
 github.com/arkaramadhan/its-vo/common v0.0.0-20241118083447-3e7928d3a430/go.mod h1:+OGy6CpVcWff9tUi6krzsf7MHugZsSjPIOgnEQbqr60=
 github.com/arkaramadhan/its-vo/common v0.0.0-20241118083829-56cc02bf9c74 h1:TjgT1uajwZgKQ5iYFdOVjxb19gsDvg58QEXFAkB0i1o=
 github.com/arkaramadhan/its-vo/common v0.0.0-20241118083829-56cc02bf9c74/go.mod h1:+OGy6CpVcWff9tUi6krzsf7MHugZsSjPIOgnEQbqr60=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241119014831-6b70fcb0f543 h1:yDfVlz0JnqJR5ulJqxtFd7a8B8KiLghTBGPKRGoxlV4=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241119014831-6b70fcb0f543/go.mod h1:DNhMgpe+dVQwBTMJ5pwigU4IHHo2p6imlcwGgdul24g=
+github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241118090558-288ec9f3958c h1:BGtma7w5xG56HcSvGpG23J8w41KJX/fdjNrQM+UGNLI=
+github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241118090558-288ec9f3958c/go.mod h1:a+/+keOKk5ncXmxm2mz2CDNE0oBjvuJdZUePcBXT86o=
+github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241118090558-288ec9f3958c h1:akaZGtfXMOWtEbK73fdYLGIypByjpdTNu+3zgmWIRa4=
+github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241118090558-288ec9f3958c/go.mod h1:uSRr9kCWNAE9q+OHMjiqtnTDhMJhsRMTNZ5Iid0D4/Y=
+github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241118090558-288ec9f3958c h1:ZPErCvTDOoeap8PClPMZ6YrhKT7L70joWbX+W5SdLoI=
+github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241118090558-288ec9f3958c/go.mod h1:Z5/UQlr7U7NNGFvwvdASxXQHBw5a+j74FGsJTVnTPwQ=
+github.com/arkaramadhan/its-vo/project-service v0.0.0-20241118090558-288ec9f3958c h1:61mt2Tdi8bShJqG11Lb8wkNYtcmkuH3HHaMresaTyxo=
+github.com/arkaramadhan/its-vo/project-service v0.0.0-20241118090558-288ec9f3958c/go.mod h1:srORmmgAEVIbbHJiI4XeZKjTwg6AtiLBE1klJ/ezhFc=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=

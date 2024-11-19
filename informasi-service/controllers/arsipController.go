@@ -167,7 +167,7 @@ func ExportArsipHandler(c *gin.Context) {
 func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var arsip []models.Arsip
-	initializers.DB.Find(&arsip)
+	initializers.DB.Table("informasi.arsips").Find(&arsip)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

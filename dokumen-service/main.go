@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
+	exportAll "github.com/arkaramadhan/its-vo/common/exportAll"
 	"github.com/arkaramadhan/its-vo/common/middleware"
 	"github.com/arkaramadhan/its-vo/dokumen-service/controllers"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+
 )
 
 func init() {
@@ -106,6 +108,8 @@ func main() {
 	r.GET("/downloadPerdin/:id/:filename", controllers.DownloadFileHandlerPerdin)
 	r.DELETE("/deletePerdin/:id/:filename", controllers.DeleteFileHandlerPerdin)
 	r.GET("/filesPerdin/:id", controllers.GetFilesByIDPerdin)
+
+	r.GET("/exportAll", exportAll.ExportAll)
 
 	r.Run(":8081")
 }

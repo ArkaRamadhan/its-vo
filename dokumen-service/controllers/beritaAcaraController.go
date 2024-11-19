@@ -174,7 +174,7 @@ func ExportBeritaAcaraHandler(c *gin.Context) {
 func ExportBeritaAcaraToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var beritaAcaras []models.BeritaAcara
-	initializers.DB.Find(&beritaAcaras)
+	initializers.DB.Table("dokumen.berita_acaras").Find(&beritaAcaras)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

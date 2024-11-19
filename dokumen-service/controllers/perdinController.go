@@ -168,7 +168,7 @@ func ExportPerdinHandler(c *gin.Context) {
 func ExportPerdinToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var perdins []models.Perdin
-	initializers.DB.Find(&perdins)
+	initializers.DB.Table("dokumen.perdins").Find(&perdins)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

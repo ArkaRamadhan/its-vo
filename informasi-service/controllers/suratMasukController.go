@@ -162,7 +162,7 @@ func ExportSuratMasukHandler(c *gin.Context) {
 func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var surat_masuk []models.SuratMasuk
-	initializers.DB.Find(&surat_masuk)
+	initializers.DB.Table("informasi.surat_masuks").Find(&surat_masuk)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

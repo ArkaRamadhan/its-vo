@@ -190,7 +190,7 @@ func ExportMeetingHandler(c *gin.Context) {
 func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var meeting []models.Meeting
-	initializers.DB.Find(&meeting)
+	initializers.DB.Table("kegiatan.meetings").Find(&meeting)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

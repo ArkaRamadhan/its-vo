@@ -6,10 +6,12 @@ import (
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/middleware"
+	exportAll "github.com/arkaramadhan/its-vo/common/exportAll"
 	"github.com/arkaramadhan/its-vo/project-service/controllers"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+
 )
 
 func init() {
@@ -51,6 +53,8 @@ func main() {
 	r.GET("/downloadProject/:id/:filename", controllers.DownloadFileHandlerProject)
 	r.DELETE("/deleteProject/:id/:filename", controllers.DeleteFileHandlerProject)
 	r.GET("/filesProject/:id", controllers.GetFilesByIDProject)
+
+	r.GET("/exportAll", exportAll.ExportAll)
 
 	r.Run(":8086")
 }

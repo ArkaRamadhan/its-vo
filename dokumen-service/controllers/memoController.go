@@ -181,7 +181,7 @@ func ExportMemoHandler(c *gin.Context) {
 func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
     // 1. Ambil data dari database
     var memos []models.Memo
-    initializers.DB.Find(&memos)
+    initializers.DB.Table("dokumen.memos").Find(&memos)
 
     // 2. Konversi ke interface ExcelData
     var excelData []helper.ExcelData

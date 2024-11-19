@@ -172,7 +172,7 @@ func ExportSuratHandler(c *gin.Context) {
 func ExportSuratToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
     // 1. Ambil data dari database
     var surats []models.Surat
-    initializers.DB.Find(&surats)
+    initializers.DB.Table("dokumen.surats").Find(&surats)
 
     // 2. Konversi ke interface ExcelData
     var excelData []helper.ExcelData

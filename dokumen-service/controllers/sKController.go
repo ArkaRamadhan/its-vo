@@ -167,7 +167,7 @@ func ExportSkHandler(c *gin.Context) {
 func ExportSkToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
     // 1. Ambil data dari database
     var sKs []models.Sk
-    initializers.DB.Find(&sKs)
+    initializers.DB.Table("dokumen.sks").Find(&sKs)
 
     // 2. Konversi ke interface ExcelData
     var excelData []helper.ExcelData

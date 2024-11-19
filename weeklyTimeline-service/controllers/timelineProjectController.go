@@ -137,13 +137,13 @@ func ExportTimelineProjectHandler(c *gin.Context) {
 
 func ExportTimelineProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events_timeline []models.TimelineProject
-	if err := initializers.DB.Find(&events_timeline).Error; err != nil {
+	if err := initializers.DB.Table("weekly_timeline.timeline_projects").Find(&events_timeline).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}
 
 	var resources []models.ResourceProject
-	if err := initializers.DB.Find(&resources).Error; err != nil {
+	if err := initializers.DB.Table("weekly_timeline.resource_projects").Find(&resources).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}

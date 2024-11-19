@@ -7,6 +7,7 @@ import (
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/middleware"
 	"github.com/arkaramadhan/its-vo/common/utils"
+	exportAll "github.com/arkaramadhan/its-vo/common/exportAll"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -89,6 +90,8 @@ func main() {
 	// ********** Route Notification ********** //
 	r.GET("/notifications", utils.GetNotifications)
 	r.DELETE("/notifications/:id", utils.DeleteNotification)
+
+	r.GET("/exportAll", exportAll.ExportAll)
 
 	r.Run(":8083")
 }

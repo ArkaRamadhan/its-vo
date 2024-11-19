@@ -113,7 +113,7 @@ func ExportBookingRapatHandler(c *gin.Context) {
 
 func ExportBookingRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.BookingRapat
-	if err := initializers.DB.Where("status = ?", "acc").Find(&events).Error; err != nil {
+	if err := initializers.DB.Table("kegiatan.booking_rapats").Where("status = ?", "acc").Find(&events).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return err
 	}
