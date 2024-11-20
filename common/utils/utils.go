@@ -3,6 +3,7 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -17,8 +18,8 @@ import (
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/models"
 	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
-
 )
 
 func GetColumn(row []string, index int) string {
@@ -126,11 +127,8 @@ func UploadHandler(c *gin.Context, baseDir string) {
 	}
 
 	dir := filepath.Join(baseDir, id)
-	// if _, err := os.Stat(dir); os.IsNotExist(err) {
-	// 	os.MkdirAll(dir, 0755)
-	// }
 
-	filePath := filepath.ToSlash(filepath.Join(dir, id, file.Filename))
+	filePath := filepath.ToSlash(filepath.Join(dir, file.Filename))
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
 		return
@@ -249,9 +247,6 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 		searchPattern = fmt.Sprintf("%%/ITS-%s/%s/%d", category, docType, currentYear) // Ini akan mencari format seperti '%/ITS-SAG/M/2023", category, docType)
 	}
 
-	// Log untuk debugging
-	log.Printf("Mencari dokumen dengan pattern: %s di schema: %s", searchPattern, schema)
-
 	result := initializers.DB.Table(schema).
 		Where(fmt.Sprintf("%s LIKE ?", dbField), searchPattern).
 		Order("id desc").
@@ -266,7 +261,6 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 			} else {
 				newNumber = fmt.Sprintf("00001/ITS-%s/%s/%d", category, docType, currentYear)
 			}
-			log.Printf("Tidak ada dokumen sebelumnya, membuat nomor pertama: %s", newNumber)
 			return newNumber, nil
 		}
 		// Ini baru error yang sebenarnya
@@ -307,31 +301,6 @@ func FetchAllRecords[T any](db *gorm.DB, c *gin.Context, result *[]T, schema str
 		return
 	}
 	c.JSON(http.StatusOK, result)
-}
-
-func CreateRecord[T any](db *gorm.DB, c *gin.Context, input *T, createByField *string) {
-	// Langsung bind ke struct
-	if err := c.ShouldBindJSON(input); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
-		return
-	}
-
-	// Set CreateBy
-	if createByField != nil {
-		if creator, exists := c.Get("username"); exists {
-			*createByField = creator.(string)
-		}
-	}
-
-	// Simpan ke database
-	if err := db.Table("dokumen.memos").Create(input).Error; err != nil {
-		log.Printf("Error saving record: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create record"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, input)
 }
 
 func ShowRecord[T any](c *gin.Context, db *gorm.DB, id string, data *T, successMessage string, schema string) {
@@ -446,3 +415,181 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 
 	c.JSON(http.StatusOK, gin.H{"message": modelName + " berhasil dihapus"})
 }
+
+// ********** END OF COMPONENT CRUD ********** //
+
+// ********** START OF IMPORT EXCEL ********** //
+
+type DateFormat struct {
+	Format      string
+	Description string
+	Example     string
+}
+
+var CommonDateFormats = []DateFormat{
+	{Format: "2 January 2006", Description: "Long date", Example: "2 January 2006"},
+	{Format: "02-06", Description: "Short month-year", Example: "02-06"},
+	{Format: "2-January-2006", Description: "Long date with dash", Example: "2-January-2006"},
+	{Format: "2006-01-02", Description: "ISO format", Example: "2006-01-02"},
+	{Format: "02-01-2006", Description: "UK format with dash", Example: "02-01-2006"},
+	{Format: "01/02/2006", Description: "US format", Example: "01/02/2006"},
+	{Format: "2006.01.02", Description: "Dot separated", Example: "2006.01.02"},
+	{Format: "02/01/2006", Description: "UK format", Example: "02/01/2006"},
+	{Format: "Jan 2, 06", Description: "Short month with year", Example: "Jan 2, 06"},
+	{Format: "Jan 2, 2006", Description: "Long month with year", Example: "Jan 2, 2006"},
+	{Format: "01/02/06", Description: "Short US format", Example: "01/02/06"},
+	{Format: "02/01/06", Description: "Short UK format", Example: "02/01/06"},
+	{Format: "06/02/01", Description: "Short reversed format", Example: "06/02/01"},
+	{Format: "06/01/02", Description: "Short alternate format", Example: "06/01/02"},
+	{Format: "06-Jan-02", Description: "Short month with dash", Example: "06-Jan-02"},
+	{Format: "01/06", Description: "Month/Year only", Example: "01/06"},
+	{Format: "02/06", Description: "Alternate Month/Year", Example: "02/06"},
+	{Format: "Jan-06", Description: "Short month-year", Example: "Jan-06"},
+}
+
+// ParseDateWithFormats mencoba parse tanggal dengan multiple format
+func ParseDateWithFormats(dateStr string) (*time.Time, error) {
+	if dateStr == "" {
+		return nil, nil
+	}
+
+	// Menangani format khusus "Feb-24" -> "Feb-2024"
+	if strings.Contains(dateStr, "-") && len(dateStr) == 5 {
+		dateStr = dateStr[:3] + "20" + dateStr[4:]
+	}
+
+	for _, format := range CommonDateFormats {
+		parsedDate, err := time.Parse(format.Format, dateStr)
+		if err == nil {
+			return &parsedDate, nil
+		}
+	}
+
+	return nil, fmt.Errorf("tidak dapat memparse tanggal: %s", dateStr)
+}
+
+// FormatDate memformat tanggal ke format yang diinginkan
+func FormatDate(date time.Time, format string) string {
+	return date.Format(format)
+}
+
+// ParseDateOrDefault mencoba parse tanggal, return default value jika gagal
+func ParseDateOrDefault(dateStr string, defaultValue time.Time) time.Time {
+	parsed, err := ParseDateWithFormats(dateStr)
+	if err != nil || parsed == nil {
+		return defaultValue
+	}
+	return *parsed
+}
+
+// IsValidDate mengecek apakah string bisa diparsing sebagai tanggal
+func IsValidDate(dateStr string) bool {
+	_, err := ParseDateWithFormats(dateStr)
+	return err == nil
+}
+
+// GetMonthYear mengembalikan bulan dan tahun dari tanggal
+func GetMonthYear(date time.Time) string {
+	return date.Format("January 2006")
+}
+
+// AddCustomFormat menambahkan format tanggal kustom
+func AddCustomFormat(format DateFormat) {
+	CommonDateFormats = append(CommonDateFormats, format)
+}
+
+type ExcelImportConfig struct {
+	SheetName   string
+	MinColumns  int
+	HeaderRows  int // Untuk skip baris header
+	ProcessRow  func(row []string, rowIndex int) error
+	LogProgress bool // Untuk mengontrol logging
+}
+
+func ImportExcelFile(c *gin.Context, config ExcelImportConfig) error {
+	if config.LogProgress {
+		log.Println("Starting Excel Import function")
+	}
+
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Printf("Error retrieving file: %v", err)
+		return fmt.Errorf("error retrieving file: %v", err)
+	}
+	defer file.Close()
+
+	tempFile, err := os.CreateTemp("", "*.xlsx")
+	if err != nil {
+		log.Printf("Error creating temp file: %v", err)
+		return fmt.Errorf("error creating temp file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, err := io.Copy(tempFile, file); err != nil {
+		log.Printf("Error copying file: %v", err)
+		return fmt.Errorf("error copying file: %v", err)
+	}
+
+	tempFile.Seek(0, 0)
+	f, err := excelize.OpenFile(tempFile.Name())
+	if err != nil {
+		log.Printf("Error opening file: %v", err)
+		return fmt.Errorf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	rows, err := f.GetRows(config.SheetName)
+	if err != nil {
+		log.Printf("Error getting rows: %v", err)
+		return fmt.Errorf("error getting rows: %v", err)
+	}
+
+	if config.LogProgress {
+		log.Printf("Total rows found: %d", len(rows))
+	}
+
+	for i, row := range rows {
+		if i < config.HeaderRows {
+			if config.LogProgress {
+				log.Printf("Skipping row %d (header rows)", i+1)
+			}
+			continue
+		}
+
+		nonEmptyCount := 0
+		for _, cell := range row {
+			if cell != "" {
+				nonEmptyCount++
+			}
+		}
+
+		if nonEmptyCount < config.MinColumns {
+			if config.LogProgress {
+				log.Printf("Row %d skipped: less than %d columns filled, only %d filled",
+					i+1, config.MinColumns, nonEmptyCount)
+			}
+			continue
+		}
+
+		if config.LogProgress {
+			log.Printf("Processing row %d", i+1)
+		}
+
+		if err := config.ProcessRow(row, i); err != nil {
+			log.Printf("Error processing row %d: %v", i+1, err)
+			continue
+		}
+
+		if config.LogProgress {
+			log.Printf("Row %d processed successfully", i+1)
+		}
+	}
+
+	if config.LogProgress {
+		log.Println("Excel Import function completed")
+	}
+
+	return nil
+}
+
+// ********** END OF IMPORT EXCEL ********** //

@@ -223,130 +223,36 @@ func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isSta
 }
 
 func ImportExcelMemo(c *gin.Context) {
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
+    config := helper.ExcelImportConfig{
+        SheetName: "MEMO",
+        MinColumns: 2,
+        ProcessRow: func(row []string, rowIndex int) error {
+            // Ambil data dari kolom
+            tanggalStr := helper.GetColumnValue(row, 0)
+            noMemo := helper.GetColumnValue(row, 1)
+            perihal := helper.GetColumnValue(row, 2)
+            pic := helper.GetColumnValue(row, 3)
 
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
+            // Parse tanggal
+            tanggal, _ := helper.ParseDateWithMultipleFormats(tanggalStr, helper.CommonDateFormats)
 
-	if _, err := io.Copy(tempFile, file); err != nil {
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
-	}
+            // Buat dan simpan memo
+            memo := models.Memo{
+                Tanggal:  tanggal,
+                NoMemo:   &noMemo,
+                Perihal:  &perihal,
+                Pic:      &pic,
+                CreateBy: c.MustGet("username").(string),
+            }
 
-	tempFile.Seek(0, 0)
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
+            return initializers.DB.Create(&memo).Error
+        },
+    }
 
-	sheetName := "MEMO"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-		return
-	}
+    if err := helper.ImportExcelFile(c, config); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+        return
+    }
 
-	log.Println("Processing rows...")
-
-	// Definisikan semua format tanggal yang mungkin
-	dateFormats := []string{
-		"02-Jan-06",
-		"02 Jan 06",
-		"02-01-06",
-		"02/01/2006",
-		"01-02-2006",
-		"06-Jan-02",
-		"2 January 2006",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"1-Jan-06",
-	}
-
-	for i, row := range rows {
-		if i == 0 { // Lewati baris pertama yang merupakan header
-			continue
-		}
-		// Pastikan minimal 4 kolom terisi
-		nonEmptyColumns := 0
-		for _, col := range row {
-			if col != "" {
-				nonEmptyColumns++
-			}
-		}
-		if nonEmptyColumns < 2 {
-			log.Printf("Baris %d dilewati: hanya %d kolom terisi", i+1, nonEmptyColumns)
-			continue
-		}
-
-		// Ambil data dari kolom dengan penanganan jika kolom kosong
-		tanggalStr := ""
-		if len(row) > 0 {
-			tanggalStr = row[0]
-		}
-		noMemo := ""
-		if len(row) > 1 {
-			noMemo = row[1]
-		}
-		perihal := ""
-		if len(row) > 2 {
-			perihal = row[2]
-		}
-		pic := ""
-		if len(row) > 3 {
-			pic = row[3]
-		}
-
-		var tanggal *time.Time
-		var parseErr error
-		if tanggalStr != "" {
-			// Coba parse menggunakan format tanggal yang sudah ada
-			for _, format := range dateFormats {
-				var parsedTanggal time.Time
-				parsedTanggal, parseErr = time.Parse(format, tanggalStr)
-				if parseErr == nil {
-					tanggal = &parsedTanggal
-					break // Keluar dari loop jika parsing berhasil
-				}
-			}
-			if parseErr != nil {
-				log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
-			}
-		}
-
-		memo := models.Memo{
-			Tanggal:  tanggal,
-			NoMemo:   &noMemo,
-			Perihal:  &perihal,
-			Pic:      &pic,
-			CreateBy: c.MustGet("username").(string),
-		}
-
-		if err := initializers.DB.Create(&memo).Error; err != nil {
-			log.Printf("Error saving memo record from row %d: %v", i+1, err)
-		} else {
-			log.Printf("Memo Row %d imported successfully", i+1)
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
+    c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

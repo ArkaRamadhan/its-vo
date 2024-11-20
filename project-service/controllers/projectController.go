@@ -284,152 +284,6 @@ func ProjectDelete(c *gin.Context) {
 	helper.DeleteRecordByID(c, initializers.DB, "project.projects", &project, "project")
 }
 
-func ImportExcelProject(c *gin.Context) {
-	log.Println("Starting ImportExcelProject function")
-
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		log.Printf("Error retrieving the file: %v", err)
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
-
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		log.Printf("Error creating temporary file: %v", err)
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-
-	if _, err := io.Copy(tempFile, file); err != nil {
-		log.Printf("Error copying file: %v", err)
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
-	}
-
-	tempFile.Seek(0, 0)
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		log.Printf("Error opening file: %v", err)
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	sheetName := "PROJECT"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		log.Printf("Error getting rows: %v", err)
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-		return
-	}
-
-	log.Printf("Total rows found: %d", len(rows))
-
-	for i, row := range rows {
-		if i < 6 { // Skip header or initial rows if necessary
-			log.Printf("Skipping row %d (header or initial rows)", i+1)
-			continue
-		}
-		// Count non-empty columns
-		nonEmptyCount := 0
-		for _, cell := range row {
-			if cell != "" {
-				nonEmptyCount++
-			}
-		}
-
-		// Skip rows with less than 3 non-empty columns
-		if nonEmptyCount < 3 {
-			log.Printf("Row %d skipped: less than 3 columns filled, only %d filled", i+1, nonEmptyCount)
-			continue
-		}
-
-		// Membersihkan string anggaran dari karakter non-numerik
-		rawAnggaran := (getColumn(row, 7))
-		var anggaranCleaned *string
-		if rawAnggaran != "" {
-			cleanedAnggaran := helper.CleanNumericString(rawAnggaran)
-			anggaranCleaned = &cleanedAnggaran
-		}
-
-		project := models.Project{
-			KodeProject:     helper.GetStringOrNil(getColumn(row, 1)),
-			JenisPengadaan:  helper.GetStringOrNil(getColumn(row, 2)),
-			NamaPengadaan:   helper.GetStringOrNil(getColumn(row, 3)),
-			DivInisiasi:     helper.GetStringOrNil(getColumn(row, 4)),
-			Bulan:           helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 5))),
-			SumberPendanaan: helper.GetStringOrNil(getColumn(row, 6)),
-			Anggaran:        anggaranCleaned,
-			NoIzin:          helper.GetStringOrNil(getColumn(row, 8)),
-			TanggalIzin:     helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 9))),
-			TanggalTor:      helper.ParseDateOrNil(helper.GetStringOrNil(getColumn(row, 10))),
-			Pic:             helper.GetStringOrNil(getColumn(row, 11)),
-			CreateBy:        c.MustGet("username").(string),
-		}
-
-		// Log data yang diimpor
-		log.Printf("Importing row %d", i+1)
-
-		if err := initializers.DB.Create(&project).Error; err != nil {
-			log.Printf("Error saving record from row %d: %v", i+1, err)
-			continue
-		} else {
-			log.Printf("Record from row %d saved successfully", i+1)
-		}
-	}
-
-	log.Println("ImportExcelProject function completed")
-	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
-}
-
-// Helper function to safely get column data or return empty if index is out of range
-func getColumn(row []string, index int) string {
-	if index >= len(row) {
-		return ""
-	}
-	return row[index]
-}
-
-// Helper function to parse date from various formats
-func parseDate(dateStr string) (time.Time, error) {
-	dateFormats := []string{
-		"2 January 2006",
-		"02-06",
-		"2-January-2006",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"06-Jan-02",
-		"01/06",
-		"02/06",
-		"Jan-06", // Menambahkan format ini untuk mengenali "Feb-24" sebagai "Feb-2024"
-	}
-
-	// Menambahkan logika untuk menangani format "Feb-24"
-	if strings.Contains(dateStr, "-") && len(dateStr) == 5 {
-		dateStr = dateStr[:3] + "20" + dateStr[4:]
-	}
-
-	for _, format := range dateFormats {
-		parsedDate, err := time.Parse(format, dateStr)
-		if err == nil {
-			return parsedDate, nil
-		}
-	}
-	return time.Time{}, fmt.Errorf("no valid date format found")
-}
-
 func ExportProjectHandler(c *gin.Context) {
 	f := excelize.NewFile()
 
@@ -505,4 +359,51 @@ func ExportProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 	}
 
 	return nil
+}
+
+func ImportExcelProject(c *gin.Context) {
+    config := helper.ExcelImportConfig{
+        SheetName:   "PROJECT",
+        MinColumns:  3,
+        HeaderRows:  6,
+        LogProgress: true,
+        ProcessRow: func(row []string, rowIndex int) error {
+            // Membersihkan string anggaran
+            rawAnggaran := helper.GetColumn(row, 7)
+            var anggaranCleaned *string
+            if rawAnggaran != "" {
+                cleanedAnggaran := helper.CleanNumericString(rawAnggaran)
+                anggaranCleaned = &cleanedAnggaran
+            }
+
+            // Parse tanggal menggunakan helper baru
+            bulan, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 5))
+            tanggalIzin, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 9))
+            tanggalTor, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 10))
+
+            project := models.Project{
+                KodeProject:     helper.GetStringOrNil(helper.GetColumn(row, 1)),
+                JenisPengadaan:  helper.GetStringOrNil(helper.GetColumn(row, 2)),
+                NamaPengadaan:   helper.GetStringOrNil(helper.GetColumn(row, 3)),
+                DivInisiasi:     helper.GetStringOrNil(helper.GetColumn(row, 4)),
+                Bulan:           bulan,
+                SumberPendanaan: helper.GetStringOrNil(helper.GetColumn(row, 6)),
+                Anggaran:        anggaranCleaned,
+                NoIzin:          helper.GetStringOrNil(helper.GetColumn(row, 8)),
+                TanggalIzin:     tanggalIzin,
+                TanggalTor:      tanggalTor,
+                Pic:             helper.GetStringOrNil(helper.GetColumn(row, 11)),
+                CreateBy:        c.MustGet("username").(string),
+            }
+
+            return initializers.DB.Create(&project).Error
+        },
+    }
+
+    if err := helper.ImportExcelFile(c, config); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

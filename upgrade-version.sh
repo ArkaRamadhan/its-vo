@@ -4,7 +4,7 @@
 services=("dokumen-service" "informasi-service" "kegiatan-service" "user-service" "weeklyTimeline-service" "project-service")
 
 # Versi baru yang ingin diupgrade
-new_version="87e1d4b67132"
+new_version="c73f50349b13"
 
 # Loop melalui semua service dan upgrade package
 for service in "${services[@]}"
@@ -14,6 +14,5 @@ do
   go get github.com/arkaramadhan/its-vo/common@$new_version
   go mod tidy
   go mod vendor
-  echo "Finished upgrading $service"
   cd ..
 done

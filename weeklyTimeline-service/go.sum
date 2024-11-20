@@ -1,9 +1,13 @@
-github.com/arkaramadhan/its-vo/common v0.0.0-20241120053113-a6462fd209c1 h1:xRpDgzUDm2kcVwD75T/El7uPyl9dbQfzRPtBbH8zCew=
-github.com/arkaramadhan/its-vo/common v0.0.0-20241120053113-a6462fd209c1/go.mod h1:UE1wLoROVuvI0IT4bm2ZMVjaYz/dOL5xVPdJfPafUmo=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241120090647-c73f50349b13 h1:tfsm7VVXl15WSaBwQDWaZTEl/wDS5y2pAq3QC0URie0=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241120090647-c73f50349b13/go.mod h1:UE1wLoROVuvI0IT4bm2ZMVjaYz/dOL5xVPdJfPafUmo=
+github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241119025020-c2bb93839afe h1:cQnrFxOfCCjQpOBuDGHyj95YOKHP09VrD+tJDAh5saY=
+github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241119025020-c2bb93839afe/go.mod h1:tvqbe8OgzbfDANY7+zCfdE7G+srASKUOXzZVd5NKTAQ=
 github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe h1:aESkxNFM14REBOTwZynZbwyIMG9wZgvc2DtQcdCOeZY=
 github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe/go.mod h1:2LRLpBZjanOf1QSlzCDwWPniSGOfDW34pH3Qqbm5lXc=
 github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241119025020-c2bb93839afe h1:w2L0wBvTHjOlLyzH4vQUePPRNOtsD692KgXtzl59x38=
 github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241119025020-c2bb93839afe/go.mod h1:bFGNTLR3pGQCU3t6LXsj0iMm95ylIepwtJh5otiMshY=
+github.com/arkaramadhan/its-vo/project-service v0.0.0-20241119025020-c2bb93839afe h1:vaQoOQ0nxnOymDEKYPHY8g1dDpI+5Dvj7eXOS9p9hXk=
+github.com/arkaramadhan/its-vo/project-service v0.0.0-20241119025020-c2bb93839afe/go.mod h1:OWEOcUlfnywMhw/NR14JbxAk5PsEzTsZrQbYAVBeL98=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=
