@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
+
 )
 
 func GetColumn(row []string, index int) string {
@@ -151,10 +152,10 @@ func UploadHandler(c *gin.Context, baseDir string) {
 	c.JSON(http.StatusOK, gin.H{"message": "File berhasil diunggah"})
 }
 
-func GetFilesByID(c *gin.Context) {
+func GetFilesByID(c *gin.Context, baseDir string) {
 	id := c.Param("id")
 
-	filePathPattern := fmt.Sprintf("C:/UploadedFile/%s/%%", id)
+	filePathPattern := fmt.Sprintf("%s/%s/%%", baseDir, id)
 
 	var files []models.File
 	result := initializers.DB.Table("common.files").Where("file_path LIKE ?", filePathPattern).Find(&files)
