@@ -177,7 +177,7 @@ func ExportSkToExcel(c *gin.Context, f *excelize.File, sheetName string, isStand
 
     // 3. Siapkan konfigurasi
     config := helper.ExcelConfig{
-        SheetName: "PERDIN",
+        SheetName: "SK",
         Columns: []helper.ExcelColumn{
             {Header: "Tanggal", Width: 20},
             {Header: "No Surat", Width: 27},
@@ -186,6 +186,8 @@ func ExportSkToExcel(c *gin.Context, f *excelize.File, sheetName string, isStand
         },
         Data:         excelData,
         IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitVertical,
     }
 
 	if f != nil {

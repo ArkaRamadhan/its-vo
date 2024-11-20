@@ -182,7 +182,7 @@ func ExportSuratToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 
     // 3. Siapkan konfigurasi
     config := helper.ExcelConfig{
-        SheetName: "PERDIN",
+        SheetName: "SURAT",
         Columns: []helper.ExcelColumn{
             {Header: "Tanggal", Width: 20},
             {Header: "No Surat", Width: 27},
@@ -191,6 +191,8 @@ func ExportSuratToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
         },
         Data:         excelData,
         IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitVertical,
     }
 
 	if f != nil {

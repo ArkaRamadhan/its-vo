@@ -18,6 +18,7 @@ import (
 	"github.com/arkaramadhan/its-vo/common/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+
 )
 
 func GetColumn(row []string, index int) string {
@@ -129,7 +130,7 @@ func UploadHandler(c *gin.Context, baseDir string) {
 	// 	os.MkdirAll(dir, 0755)
 	// }
 
-	filePath := filepath.Join(dir, file.Filename)
+	filePath := filepath.ToSlash(filepath.Join(dir, id, file.Filename))
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
 		return
@@ -155,8 +156,10 @@ func UploadHandler(c *gin.Context, baseDir string) {
 func GetFilesByID(c *gin.Context) {
 	id := c.Param("id")
 
+	filePathPattern := fmt.Sprintf("C:/UploadedFile/%s/%%", id)
+
 	var files []models.File
-	result := initializers.DB.Table("common.files").Where("user_id = ?", id).Find(&files)
+	result := initializers.DB.Table("common.files").Where("file_path LIKE ?", filePathPattern).Find(&files)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data file"})
 		return

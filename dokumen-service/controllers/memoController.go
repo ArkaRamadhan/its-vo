@@ -200,6 +200,8 @@ func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isSta
         },
         Data:         excelData,
         IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitVertical,
     }
 
 	if f != nil {

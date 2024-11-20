@@ -182,6 +182,7 @@ func ExportSuratKeluarToExcel(c *gin.Context, f *excelize.File, sheetName string
 		},
 		Data:         excelData,
 		IsSplitSheet: false,
+		GetStatus:    nil,
 	}
 
 	if f != nil {

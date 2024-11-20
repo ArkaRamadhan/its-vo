@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	informasi "github.com/arkaramadhan/its-vo/informasi-service/controllers"
-	// weekly "github.com/arkaramadhan/its-vo/weeklyTimeline-service/controllers"
-	// project "github.com/arkaramadhan/its-vo/project-service/controllers"
-	// dokumen "github.com/arkaramadhan/its-vo/dokumen-service/controllers"
+	weekly "github.com/arkaramadhan/its-vo/weeklyTimeline-service/controllers"
+	project "github.com/arkaramadhan/its-vo/project-service/controllers"
+	dokumen "github.com/arkaramadhan/its-vo/dokumen-service/controllers"
 	kegiatan "github.com/arkaramadhan/its-vo/kegiatan-service/controllers"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
@@ -28,11 +28,11 @@ func ExportAll(c *gin.Context) {
 		name     string
 		exporter func(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error
 	}{
-		// {"BERITA ACARA", dokumen.ExportBeritaAcaraToExcel},
-		// {"MEMO", dokumen.ExportMemoToExcel},
-		// {"PERDIN", dokumen.ExportPerdinToExcel},
-		// {"SK", dokumen.ExportSkToExcel},
-		// {"SURAT", dokumen.ExportSuratToExcel},
+		{"BERITA ACARA", dokumen.ExportBeritaAcaraToExcel},
+		{"MEMO", dokumen.ExportMemoToExcel},
+		{"PERDIN", dokumen.ExportPerdinToExcel},
+		{"SK", dokumen.ExportSkToExcel},
+		{"SURAT", dokumen.ExportSuratToExcel},
 
 		{"ARSIP", informasi.ExportArsipToExcel},
 		{"SURAT KELUAR", informasi.ExportSuratKeluarToExcel},
@@ -44,9 +44,9 @@ func ExportAll(c *gin.Context) {
 		{"MEETING", kegiatan.ExportMeetingToExcel},
 		{"TIMELINE DESKTOP", kegiatan.ExportTimelineDesktopToExcel},
 
-		// {"PROJECT", project.ExportProjectToExcel},
+		{"PROJECT", project.ExportProjectToExcel},
 
-		// {"TIMELINE PROJECT", weekly.ExportTimelineProjectToExcel},
+		{"TIMELINE PROJECT", weekly.ExportTimelineProjectToExcel},
 	}
 
 	for _, sheet := range sheets {

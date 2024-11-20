@@ -31,6 +31,12 @@ func CreateEventDesktop(c *gin.Context) {
 		return
 	}
 
+	var resource models.ResourceDesktop
+	if err := initializers.DB.Table("kegiatan.resource_desktops").First(&resource, event.ResourceId).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	// Parsing waktu untuk notifikasi
 	loc, err := time.LoadLocation("Asia/Jakarta")
 	if err != nil {

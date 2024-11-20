@@ -190,6 +190,7 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 		},
 		Data:         excelData,
 		IsSplitSheet: false,
+		GetStatus:    nil,
 	}
 
 	if f != nil {

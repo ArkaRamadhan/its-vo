@@ -193,6 +193,8 @@ func ExportBeritaAcaraToExcel(c *gin.Context, f *excelize.File, sheetName string
 		},
 		Data:         excelData,
 		IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitVertical,
 	}
 
 	if f != nil {

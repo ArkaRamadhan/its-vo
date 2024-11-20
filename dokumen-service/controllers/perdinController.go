@@ -187,6 +187,8 @@ func ExportPerdinToExcel(c *gin.Context, f *excelize.File, sheetName string, isS
 		},
 		Data:         excelData,
 		IsSplitSheet: true,
+		GetStatus:    nil,
+		SplitType:    helper.SplitVertical,
 	}
 
 	if f != nil {
