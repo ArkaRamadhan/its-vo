@@ -12,7 +12,6 @@ import (
 	"github.com/arkaramadhan/its-vo/dokumen-service/models"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
-
 )
 
 type BcRequest struct {
@@ -29,7 +28,7 @@ func UploadHandlerBeritaAcara(c *gin.Context) {
 }
 
 func GetFilesByIDBeritaAcara(c *gin.Context) {
-	helper.GetFilesByID(c, "/app/UploadedFile/beritaacara") 
+	helper.GetFilesByID(c, "/app/UploadedFile/beritaacara")
 }
 
 func DeleteFileHandlerBeritaAcara(c *gin.Context) {
@@ -114,41 +113,48 @@ func BeritaAcaraUpdate(c *gin.Context) {
 	var requestBody BcRequest
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Printf("Error binding JSON: %v", err)
-        helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
-        return
-    }
+		helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		return
+	}
 
-    var tanggal *time.Time
-    if requestBody.Tanggal != nil {
-        dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
-        parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
-            return
-        }
-        tanggal = parsedTanggal
-    }
+	var tanggal *time.Time
+	if requestBody.Tanggal != nil {
+		dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
+		parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
+			return
+		}
+		tanggal = parsedTanggal
+	}
 
-    // Assuming you are updating a Memo record
-    id := c.Param("id") // or however you get the ID
-    var bc models.BeritaAcara
-    if err := initializers.DB.First(&bc, id).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"message": "berita acara tidak ditemukan"})
-        return
-    }
+	// Assuming you are updating a Memo record
+	id := c.Param("id") // or however you get the ID
+	var bc models.BeritaAcara
+	if err := initializers.DB.First(&bc, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "berita acara tidak ditemukan"})
+		return
+	}
 
-    // Update the memo with new data
-    if tanggal != nil {
-        bc.Tanggal = tanggal
-    }
-    if requestBody.Perihal != nil {
+	// Mengambil nomor surat terbaru
+	nomor, err := GetLatestBeritaAcaraNumber(*requestBody.NoSurat)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get latest Berita Acara number"})
+		return
+	}
+
+	// Update the memo with new data
+	if tanggal != nil {
+		bc.Tanggal = tanggal
+	}
+	if requestBody.Perihal != nil {
 		bc.Perihal = requestBody.Perihal
 	}
 	if requestBody.Pic != nil {
 		bc.Pic = requestBody.Pic
 	}
-	if requestBody.NoSurat != nil {
-		bc.NoSurat = requestBody.NoSurat
+	if requestBody.NoSurat != nil && *requestBody.NoSurat != "" {
+		bc.NoSurat = &nomor
 	}
 
 	if err := initializers.DB.Save(&bc).Error; err != nil {

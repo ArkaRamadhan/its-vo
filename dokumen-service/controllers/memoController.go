@@ -30,7 +30,7 @@ func UploadHandlerMemo(c *gin.Context) {
 }
 
 func GetFilesByIDMemo(c *gin.Context) {
-	helper.GetFilesByID(c, "/app/UploadedFile/memo") 
+	helper.GetFilesByID(c, "/app/UploadedFile/memo")
 }
 
 func DeleteFileHandlerMemo(c *gin.Context) {
@@ -147,6 +147,13 @@ func MemoUpdate(c *gin.Context) {
 		return
 	}
 
+	// Mengambil nomor surat terbaru
+	nomor, err := GetLatestMemoNumber(*requestBody.NoMemo)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get latest Memo number"})
+		return
+	}
+
 	// Update the memo with new data
 	if tanggal != nil {
 		memo.Tanggal = tanggal
@@ -157,7 +164,9 @@ func MemoUpdate(c *gin.Context) {
 	if requestBody.Pic != nil {
 		memo.Pic = requestBody.Pic
 	}
-
+	if requestBody.NoMemo != nil && *requestBody.NoMemo != "" {
+		memo.NoMemo = &nomor
+	}
 	if err := initializers.DB.Save(&memo).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update memo: " + err.Error()})
 		return

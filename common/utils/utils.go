@@ -326,81 +326,6 @@ func ShowRecord[T any](c *gin.Context, db *gorm.DB, id string, data *T, successM
 	c.JSON(http.StatusOK, data)
 }
 
-type DocumentUpdateParams struct {
-	DB              *gorm.DB
-	C               *gin.Context
-	Request         interface{}
-	Document        interface{}
-	DocumentType    string
-	GetLatestNumber func(string) (string, error)
-}
-
-type DynamicDocument interface {
-	GetProperty(key string) interface{}
-	SetProperty(key string, value interface{}) error
-}
-
-func UpdateDocument(params DocumentUpdateParams) error {
-	var err error
-	document, ok := params.Document.(DynamicDocument)
-	if !ok {
-		RespondError(params.C, http.StatusBadRequest, "Document does not implement DynamicDocument interface")
-		return fmt.Errorf("Document does not implement DynamicDocument interface")
-	}
-
-	// Bind JSON request body
-	if err = params.C.BindJSON(&params.Request); err != nil {
-		log.Printf("Error binding JSON for %s: %v", params.DocumentType, err)
-		RespondError(params.C, http.StatusBadRequest, "invalid request body: "+err.Error())
-		return fmt.Errorf("invalid request body: %v", err)
-	}
-
-	// Ambil ID dari parameter URL
-	id := params.C.Param("id")
-
-	// Cari dokumen berdasarkan ID
-	if err = params.DB.First(document, id).Error; err != nil {
-		log.Printf("Error finding %s with ID %s: %v", params.DocumentType, id, err)
-		RespondError(params.C, http.StatusNotFound, fmt.Sprintf("%s not found", params.DocumentType))
-		return fmt.Errorf("Error finding %s with ID %s: %v", params.DocumentType, id, err)
-	}
-	// Proses pembaruan spesifik dokumen
-	requestMap, ok := params.Request.(map[string]interface{})
-	if !ok {
-		RespondError(params.C, http.StatusBadRequest, "Request body must be a JSON object")
-		return fmt.Errorf("Request body must be a JSON object")
-	}
-	if err = processDocumentUpdate(document, requestMap); err != nil {
-		log.Printf("Error updating %s: %v", params.DocumentType, err)
-		RespondError(params.C, http.StatusInternalServerError, err.Error())
-		return fmt.Errorf("Error updating %s: %v", params.DocumentType, err)
-	}
-
-	// Simpan perubahan
-	if err = params.DB.Save(document).Error; err != nil {
-		log.Printf("Error saving updated %s: %v", params.DocumentType, err)
-		RespondError(params.C, http.StatusInternalServerError, fmt.Sprintf("failed to update %s: %s", params.DocumentType, err.Error()))
-		return fmt.Errorf("Error saving updated %s: %v", params.DocumentType, err)
-	}
-
-	// Tambahkan log untuk mencatat data yang diupdate
-	log.Printf("Data updated successfully: %v", document)
-
-	// Return response sukses
-	params.C.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("%s successfully updated", params.DocumentType)})
-	return nil
-}
-
-func processDocumentUpdate(document DynamicDocument, request map[string]interface{}) error {
-	// Implementasi logika update menggunakan interface
-	for key, value := range request {
-		if err := document.SetProperty(key, value); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // ParseFlexibleDate mencoba mem-parsing string tanggal dengan daftar format yang diberikan.
 func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 	var parsedDate time.Time
@@ -417,10 +342,13 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
 
+	// Tentukan schema untuk tabel
+	tableName := fmt.Sprintf("%s.%s", schema, "files") // Format: schema.table_name
+
 	// Khusus untuk model File
 	if file, ok := model.(*models.File); ok {
 		// Ambil data file terlebih dahulu
-		if err := db.Table(schema).First(file, id).Error; err != nil {
+		if err := db.Table(tableName).First(file, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 			return
 		}
@@ -430,6 +358,7 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		// Hapus file fisik
 		if err := os.Remove(file.FilePath); err != nil {
 			if !os.IsNotExist(err) { // Abaikan error jika file memang sudah tidak ada
+				log.Printf("Gagal menghapus file fisik: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus file fisik: " + err.Error()})
 				return
 			}
@@ -445,36 +374,44 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		if err != nil {
 			log.Printf("Error membaca direktori %s: %v", dirPath, err)
 		} else {
-			if len(entries) == 0 { // Jika folder kosong, hapus
+			log.Printf("Jumlah file dalam folder %s: %d", dirPath, len(entries))
+			for _, entry := range entries {
+				log.Printf("File tersisa: %s", entry.Name())
+			}
+
+			// Hapus folder jika kosong
+			if len(entries) == 0 {
 				if err := os.Remove(dirPath); err != nil {
-					log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
+					log.Printf("Gagal menghapus folder kosong %s: %v", dirPath, err)
 				} else {
-					log.Printf("Berhasil menghapus direktori: %s", dirPath)
+					log.Printf("Berhasil menghapus folder: %s", dirPath)
 				}
 			} else {
-				log.Printf("Direktori tidak kosong, tidak dihapus: %s", dirPath)
-				for _, entry := range entries {
-					log.Printf("File tersisa: %s", entry.Name())
+				// Paksa hapus folder dan seluruh isinya jika tidak kosong
+				if err := os.RemoveAll(dirPath); err != nil {
+					log.Printf("Gagal menghapus folder beserta isinya %s: %v", dirPath, err)
+					c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus folder: " + err.Error()})
+					return
 				}
+				log.Printf("Berhasil menghapus folder beserta isinya: %s", dirPath)
 			}
 		}
 	} else {
 		// Untuk model lain, cek apakah data ada
-		if err := db.Table(schema).First(model, id).Error; err != nil {
+		if err := db.Table(tableName).First(model, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 			return
 		}
 	}
 
 	// Hapus record dari database
-	if err := db.Table(schema).Delete(model).Error; err != nil {
+	if err := db.Table(tableName).Delete(model).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus " + modelName + ": " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": modelName + " berhasil dihapus"})
 }
-
 
 // ********** END OF COMPONENT CRUD ********** //
 

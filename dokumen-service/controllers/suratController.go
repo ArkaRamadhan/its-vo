@@ -32,7 +32,7 @@ func GetFilesByIDSurat(c *gin.Context) {
 }
 
 func DeleteFileHandlerSurat(c *gin.Context) {
-	helper.DeleteFileHandler(c, "/app/UploadedFile/surat") 
+	helper.DeleteFileHandler(c, "/app/UploadedFile/surat")
 }
 
 func DownloadFileHandlerSurat(c *gin.Context) {
@@ -138,6 +138,13 @@ func SuratUpdate(c *gin.Context) {
 		return
 	}
 
+	// Mengambil nomor surat terbaru
+	nomor, err := GetLatestSuratNumber(*requestBody.NoSurat)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get latest Surat number"})
+		return
+	}
+
 	// Update the memo with new data
 	if tanggal != nil {
 		surat.Tanggal = tanggal
@@ -147,6 +154,9 @@ func SuratUpdate(c *gin.Context) {
 	}
 	if requestBody.Pic != nil {
 		surat.Pic = requestBody.Pic
+	}
+	if requestBody.NoSurat != nil && *requestBody.NoSurat != "" {
+		surat.NoSurat = &nomor
 	}
 
 	if err := initializers.DB.Save(&surat).Error; err != nil {

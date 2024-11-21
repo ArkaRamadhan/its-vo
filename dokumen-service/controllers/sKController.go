@@ -133,6 +133,13 @@ func SkUpdate(c *gin.Context) {
 		return
 	}
 
+	// Mengambil nomor surat terbaru
+	nomor, err := GetLatestSkNumber(*requestBody.NoSurat)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get latest SK number"})
+		return
+	}
+
 	// Update the sk with new data
 	if tanggal != nil {
 		sk.Tanggal = tanggal
@@ -142,6 +149,9 @@ func SkUpdate(c *gin.Context) {
 	}
 	if requestBody.Pic != nil {
 		sk.Pic = requestBody.Pic
+	}
+	if requestBody.NoSurat != nil && *requestBody.NoSurat != "" {
+		sk.NoSurat = &nomor
 	}
 
 	if err := initializers.DB.Save(&sk).Error; err != nil {
@@ -214,7 +224,7 @@ func ImportExcelSk(c *gin.Context) {
 		LogProgress: true,
 		ProcessRow: func(row []string, rowIndex int) error {
 			// Ambil data dari kolom
-			tanggalStr := helper.GetColumn(row, 0) 
+			tanggalStr := helper.GetColumn(row, 0)
 			noSurat := helper.GetColumn(row, 1)
 			perihal := helper.GetColumn(row, 2)
 			pic := helper.GetColumn(row, 3)

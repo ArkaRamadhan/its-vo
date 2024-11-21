@@ -34,7 +34,6 @@ func main() {
 
 	r.Use(middleware.CORS())
 
-	r.POST("/user", controllers.AddUser)
 	r.POST("/login", controllers.Login)
 
 	r.Use(middleware.TokenAuthMiddleware())

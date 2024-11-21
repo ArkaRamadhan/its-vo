@@ -173,7 +173,7 @@ func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string,
 		Columns: []helper.ExcelColumn{
 			{Header: "Tanggal", Width: 20},
 			{Header: "No Surat", Width: 27},
-			{Header: "Title", Width: 40},
+			{Header: "Title", Width: 50},
 			{Header: "Related Div", Width: 20},
 			{Header: "Destiny Div", Width: 20},
 		},
@@ -183,7 +183,6 @@ func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string,
 		CustomStyles: &helper.CustomStyles{
 			DefaultCellStyle: &excelize.Style{
 				Border:    helper.BorderBlack,
-				Alignment: helper.WrapAlignment,
 			},
 		},
 	}
@@ -204,14 +203,6 @@ func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string,
 	}
 
 	return nil
-}
-
-// Fungsi untuk mengonversi serial Excel ke tanggal
-func excelDateToTimeSuratMasuk(excelDate int) (time.Time, error) {
-	// Excel menggunakan tanggal mulai 1 Januari 1900 (serial 1)
-	baseDate := time.Date(1899, time.December, 30, 0, 0, 0, 0, time.UTC)
-	days := time.Duration(excelDate) * 24 * time.Hour
-	return baseDate.Add(days), nil
 }
 
 func ImportExcelSuratMasuk(c *gin.Context) {

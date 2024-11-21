@@ -191,7 +191,6 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 		CustomStyles: &helper.CustomStyles{
 			DefaultCellStyle: &excelize.Style{
 				Border:    helper.BorderBlack,
-				Alignment: helper.WrapAlignment,
 			},
 		},
 	}

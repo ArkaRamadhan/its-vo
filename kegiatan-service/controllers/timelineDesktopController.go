@@ -45,7 +45,7 @@ func CreateEventDesktop(c *gin.Context) {
 	}
 
 	// Ubah format parsing sesuai dengan format yang diterima
-	startTime, err := time.ParseInLocation("2006-01-02 15:04:05", event.Start, loc) // Ubah format di sini
+	startTime, err := time.ParseInLocation("2006-01-02", event.Start, loc) // Ubah format di sini
 	if err != nil {
 		log.Printf("Error parsing start time: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Error parsing start time"})

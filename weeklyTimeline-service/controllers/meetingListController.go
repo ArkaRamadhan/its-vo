@@ -181,7 +181,7 @@ func CreateExcelMeetingList(c *gin.Context) {
 func ExportMeetingListToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	// 1. Ambil data dari database
 	var meetingList []models.MeetingSchedule
-	initializers.DB.Find(&meetingList)
+	initializers.DB.Table("weekly_timeline.meeting_schedules").Find(&meetingList)
 
 	// 2. Konversi ke interface ExcelData
 	var excelData []helper.ExcelData

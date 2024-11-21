@@ -27,7 +27,7 @@ func UploadHandlerPerdin(c *gin.Context) {
 	helper.UploadHandler(c, "/app/UploadedFile/perdin")
 }
 
-func GetFilesByIDPerdin(c *gin.Context) { 
+func GetFilesByIDPerdin(c *gin.Context) {
 	helper.GetFilesByID(c, "/app/UploadedFile/perdin")
 }
 
@@ -130,6 +130,13 @@ func PerdinUpdate(c *gin.Context) {
 		return
 	}
 
+	// Mengambil nomor surat terbaru
+	nomor, err := GetLatestPerdinNumber(*requestBody.NoPerdin)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get latest Perdin number"})
+		return
+	}
+
 	// Update the memo with new data
 	if tanggal != nil {
 		perdin.Tanggal = tanggal
@@ -140,8 +147,8 @@ func PerdinUpdate(c *gin.Context) {
 	if requestBody.Transport != nil {
 		perdin.Transport = requestBody.Transport
 	}
-	if requestBody.NoPerdin != nil {
-		perdin.NoPerdin = requestBody.NoPerdin
+	if requestBody.NoPerdin != nil && *requestBody.NoPerdin != "" {
+		perdin.NoPerdin = &nomor
 	}
 
 	if err := initializers.DB.Save(&perdin).Error; err != nil {
