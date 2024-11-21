@@ -3,6 +3,9 @@ package models
 import (
 	"encoding/json"
 	"time"
+
+	helper "github.com/arkaramadhan/its-vo/common/utils"
+
 )
 
 type TimelineProject struct {
@@ -76,4 +79,33 @@ func (i *MeetingSchedule) MarshalJSON() ([]byte, error) {
 		Tanggal: &tanggalFormatted,
 		Alias:   (*Alias)(i),
 	})
+}
+
+func (mt *MeetingSchedule) ToExcelRow() []interface{} {
+	tanggalStr := ""
+	if mt.Tanggal != nil {
+		tanggalStr = mt.Tanggal.Format("2006-01-02")
+	}
+
+	return []interface{}{
+		helper.GetValue(mt.Hari),
+		tanggalStr,
+		helper.GetValue(mt.Perihal),
+		helper.GetValue(mt.Waktu),
+		helper.GetValue(mt.Selesai),
+		helper.GetValue(mt.Tempat),
+		helper.GetValue(mt.Pic),
+		helper.GetValue(mt.Status),
+	}
+}
+
+func (mt *MeetingSchedule) GetDocType() string {
+	return ""
+}
+
+func (m *MeetingSchedule) GetStatus() string {
+	if m.Status == nil {
+		return "" // atau nilai default lainnya
+	}
+	return *m.Status
 }
