@@ -416,7 +416,7 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
 
-	// Khusus untuk model File, kita perlu mendapatkan path file sebelum menghapus
+	// Khusus untuk model File
 	if file, ok := model.(*models.File); ok {
 		// Ambil data file terlebih dahulu
 		if err := db.Table(schema).First(file, id).Error; err != nil {
@@ -428,6 +428,17 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		if err := os.Remove(file.FilePath); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "gagal menghapus file fisik: " + err.Error()})
 			return
+		}
+
+		// Hapus folder ID jika kosong
+		dirPath := filepath.Dir(file.FilePath) // Mendapatkan path folder ID
+		// Baca isi direktori
+		entries, err := os.ReadDir(dirPath)
+		if err == nil && len(entries) == 0 {
+			// Hapus direktori jika kosong
+			if err := os.Remove(dirPath); err != nil {
+				log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
+			}
 		}
 	} else {
 		// Untuk model lain, cek apakah data ada

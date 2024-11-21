@@ -6,8 +6,6 @@ github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241121063156-f25b14a76a
 github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241121063156-f25b14a76a87/go.mod h1:/ITBc3TBmqRn5YTRamp9FkuU1OfVh9IuCsjMRGYx0Mk=
 github.com/arkaramadhan/its-vo/project-service v0.0.0-20241121063156-f25b14a76a87 h1:zt7vp2v1G9ApSsKjk3m+Ya8v/+E0Dz/a07ax0o0DdtY=
 github.com/arkaramadhan/its-vo/project-service v0.0.0-20241121063156-f25b14a76a87/go.mod h1:VrpRK7LyoIWZ2MWuqeWLTDcrwerzLYcegI8jLLbWBHI=
-github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121063156-f25b14a76a87 h1:a+4ASoxk6MfeWvnuDKSFYX8hO01vSK5Yv9ysMnqD18Q=
-github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121063156-f25b14a76a87/go.mod h1:JFJugFeTmTHrQ7uqZe+hOmAhzCYu3PGlhdzxUxozCbg=
 github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121105913-52829277178b h1:epPm/i+1d1xVkQfamCgvf0i7nJAGrdWHqYYaxrUbAVc=
 github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121105913-52829277178b/go.mod h1:w1pn/ku5AJS/Q4bJ0UNw0qxRC2/bmqFr/58KpTQhszU=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
