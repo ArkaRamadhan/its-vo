@@ -115,26 +115,39 @@ func ExportToExcel(config ExcelConfig) (*excelize.File, error) {
 }
 
 func ExportToSheet(f *excelize.File, config ExcelConfig) error {
-	// Buat sheet baru
-	f.NewSheet(config.SheetName)
-	f.DeleteSheet("Sheet1")
-
-	// Set headers dan style
-	styleHeader, err := CreateHeaderStyle(f)
-	if err != nil {
-		return err
+	if len(config.Data) == 0 {
+		// Buat sheet kosong dengan header
+		f.NewSheet(config.SheetName)
+		
+		// Tulis header
+		for colIdx, col := range config.Columns {
+			cellName := GetCellName(colIdx, 0)
+			f.SetCellValue(config.SheetName, cellName, col.Header)
+			
+			// Set lebar kolom
+			colName := string(rune('A' + colIdx))
+			f.SetColWidth(config.SheetName, colName, colName, col.Width)
+		}
+		
+		return nil
 	}
 
-	if config.CustomStyles != nil && config.CustomStyles.StatusStyles != nil {
-		status := config.GetStatus(config.Data[0])
-		if style, ok := config.CustomStyles.StatusStyles[status]; ok {
-			statusCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), 2)
-			styleID, err := f.NewStyle(style)
-			if err != nil {
-				return err
-			}
-			f.SetCellStyle(config.SheetName, statusCell, statusCell, styleID)
+	// Jika GetStatus nil, gunakan default behavior
+	if config.GetStatus == nil {
+		config.GetStatus = func(data interface{}) string {
+			return "" // atau nilai default lainnya
 		}
+	}
+
+	// Lanjutkan dengan kode existing
+	status := config.GetStatus(config.Data[0])
+	if style, ok := config.CustomStyles.StatusStyles[status]; ok {
+		statusCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), 2)
+		styleID, err := f.NewStyle(style)
+		if err != nil {
+			return err
+		}
+		f.SetCellStyle(config.SheetName, statusCell, statusCell, styleID)
 	}
 
 	if config.CustomStyles != nil && config.CustomStyles.DefaultCellStyle != nil {

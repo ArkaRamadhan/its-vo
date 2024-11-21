@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
+
 )
 
 func GetColumn(row []string, index int) string {
@@ -424,20 +425,40 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 			return
 		}
 
+		log.Printf("Mencoba menghapus file: %s", file.FilePath)
+
 		// Hapus file fisik
 		if err := os.Remove(file.FilePath); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "gagal menghapus file fisik: " + err.Error()})
-			return
+			if !os.IsNotExist(err) { // Abaikan error jika file memang sudah tidak ada
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "gagal menghapus file fisik: " + err.Error()})
+				return
+			}
+			log.Printf("File sudah tidak ada: %s", file.FilePath)
 		}
 
-		// Hapus folder ID jika kosong
+		// Hapus folder ID
 		dirPath := filepath.Dir(file.FilePath) // Mendapatkan path folder ID
+		log.Printf("Mencoba menghapus direktori: %s", dirPath)
+
 		// Baca isi direktori
 		entries, err := os.ReadDir(dirPath)
-		if err == nil && len(entries) == 0 {
-			// Hapus direktori jika kosong
-			if err := os.Remove(dirPath); err != nil {
-				log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
+		if err != nil {
+			log.Printf("Error membaca direktori %s: %v", dirPath, err)
+		} else {
+			log.Printf("Jumlah file dalam direktori: %d", len(entries))
+			if len(entries) == 0 {
+				// Hapus direktori jika kosong
+				if err := os.Remove(dirPath); err != nil {
+					log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
+				} else {
+					log.Printf("Berhasil menghapus direktori: %s", dirPath)
+				}
+			} else {
+				log.Printf("Direktori tidak kosong, tidak dihapus: %s", dirPath)
+				// Optional: print isi direktori untuk debug
+				for _, entry := range entries {
+					log.Printf("File tersisa: %s", entry.Name())
+				}
 			}
 		}
 	} else {
