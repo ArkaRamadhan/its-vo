@@ -32,7 +32,7 @@ func GetFilesByIDSurat(c *gin.Context) {
 }
 
 func DeleteFileHandlerSurat(c *gin.Context) {
-	helper.DeleteFileHandler(c, "/app/UploadedFile/surat")
+	helper.DeleteFileHandler(c, "/app/UploadedFile/surat") 
 }
 
 func DownloadFileHandlerSurat(c *gin.Context) {

@@ -2,11 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
@@ -41,7 +38,7 @@ func UploadHandlerProject(c *gin.Context) {
 }
 
 func GetFilesByIDProject(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/project")
 }
 
 func DeleteFileHandlerProject(c *gin.Context) {
@@ -362,48 +359,48 @@ func ExportProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 }
 
 func ImportExcelProject(c *gin.Context) {
-    config := helper.ExcelImportConfig{
-        SheetName:   "PROJECT",
-        MinColumns:  3,
-        HeaderRows:  6,
-        LogProgress: true,
-        ProcessRow: func(row []string, rowIndex int) error {
-            // Membersihkan string anggaran
-            rawAnggaran := helper.GetColumn(row, 7)
-            var anggaranCleaned *string
-            if rawAnggaran != "" {
-                cleanedAnggaran := helper.CleanNumericString(rawAnggaran)
-                anggaranCleaned = &cleanedAnggaran
-            }
+	config := helper.ExcelImportConfig{
+		SheetName:   "PROJECT",
+		MinColumns:  3,
+		HeaderRows:  6,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Membersihkan string anggaran
+			rawAnggaran := helper.GetColumn(row, 7)
+			var anggaranCleaned *string
+			if rawAnggaran != "" {
+				cleanedAnggaran := helper.CleanNumericString(rawAnggaran)
+				anggaranCleaned = &cleanedAnggaran
+			}
 
-            // Parse tanggal menggunakan helper baru
-            bulan, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 5))
-            tanggalIzin, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 9))
-            tanggalTor, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 10))
+			// Parse tanggal menggunakan helper baru
+			bulan, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 5))
+			tanggalIzin, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 9))
+			tanggalTor, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 10))
 
-            project := models.Project{
-                KodeProject:     helper.GetStringOrNil(helper.GetColumn(row, 1)),
-                JenisPengadaan:  helper.GetStringOrNil(helper.GetColumn(row, 2)),
-                NamaPengadaan:   helper.GetStringOrNil(helper.GetColumn(row, 3)),
-                DivInisiasi:     helper.GetStringOrNil(helper.GetColumn(row, 4)),
-                Bulan:           bulan,
-                SumberPendanaan: helper.GetStringOrNil(helper.GetColumn(row, 6)),
-                Anggaran:        anggaranCleaned,
-                NoIzin:          helper.GetStringOrNil(helper.GetColumn(row, 8)),
-                TanggalIzin:     tanggalIzin,
-                TanggalTor:      tanggalTor,
-                Pic:             helper.GetStringOrNil(helper.GetColumn(row, 11)),
-                CreateBy:        c.MustGet("username").(string),
-            }
+			project := models.Project{
+				KodeProject:     helper.GetStringOrNil(helper.GetColumn(row, 1)),
+				JenisPengadaan:  helper.GetStringOrNil(helper.GetColumn(row, 2)),
+				NamaPengadaan:   helper.GetStringOrNil(helper.GetColumn(row, 3)),
+				DivInisiasi:     helper.GetStringOrNil(helper.GetColumn(row, 4)),
+				Bulan:           bulan,
+				SumberPendanaan: helper.GetStringOrNil(helper.GetColumn(row, 6)),
+				Anggaran:        anggaranCleaned,
+				NoIzin:          helper.GetStringOrNil(helper.GetColumn(row, 8)),
+				TanggalIzin:     tanggalIzin,
+				TanggalTor:      tanggalTor,
+				Pic:             helper.GetStringOrNil(helper.GetColumn(row, 11)),
+				CreateBy:        c.MustGet("username").(string),
+			}
 
-            return initializers.DB.Create(&project).Error
-        },
-    }
+			return initializers.DB.Create(&project).Error
+		},
+	}
 
-    if err := helper.ImportExcelFile(c, config); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-        return
-    }
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
+	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

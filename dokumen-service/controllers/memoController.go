@@ -30,7 +30,7 @@ func UploadHandlerMemo(c *gin.Context) {
 }
 
 func GetFilesByIDMemo(c *gin.Context) {
-	helper.GetFilesByID(c, "/app/UploadedFile/memo")
+	helper.GetFilesByID(c, "/app/UploadedFile/memo") 
 }
 
 func DeleteFileHandlerMemo(c *gin.Context) {

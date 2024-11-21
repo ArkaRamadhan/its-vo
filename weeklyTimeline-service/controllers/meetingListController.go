@@ -36,7 +36,7 @@ func UploadHandlerMeetingList(c *gin.Context) {
 }
 
 func GetFilesByIDMeetingList(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/meetingschedule")
 }
 
 func DeleteFileHandlerMeetingList(c *gin.Context) {
@@ -503,4 +503,49 @@ func hariIndonesia(day string) string {
 		"Sunday":    "Minggu",
 	}
 	return days[day]
+}
+
+func ImportExcelMemo(c *gin.Context) {
+	config := helper.ExcelImportConfig{
+		SheetName:   "MEETING SCHEDULE",
+		MinColumns:  2,
+		HeaderRows:  1,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Ambil data dari kolom
+			hari := helper.GetColumn(row, 0)
+			tanggalStr := helper.GetColumn(row, 1)
+			perihal := helper.GetColumn(row, 2)
+			waktu := helper.GetColumn(row, 3)
+			selesai := helper.GetColumn(row, 4)
+			tempat := helper.GetColumn(row, 5)
+			status := helper.GetColumn(row, 6)
+			pic := helper.GetColumn(row, 7)
+
+			// Parse tanggal
+			tanggal, _ := helper.ParseDateWithFormats(tanggalStr)
+
+			// Buat dan simpan memo
+			meetingList := models.MeetingSchedule{
+				Hari:     &hari,
+				Tanggal:  tanggal,
+				Perihal:  &perihal,
+				Waktu:    &waktu,
+				Selesai:  &selesai,
+				Tempat:   &tempat,
+				Status:   &status,
+				Pic:      &pic,
+				CreateBy: c.MustGet("username").(string),
+			}
+
+			return initializers.DB.Create(&meetingList).Error
+		},
+	}
+
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

@@ -27,7 +27,7 @@ func UploadHandlerPerdin(c *gin.Context) {
 	helper.UploadHandler(c, "/app/UploadedFile/perdin")
 }
 
-func GetFilesByIDPerdin(c *gin.Context) {
+func GetFilesByIDPerdin(c *gin.Context) { 
 	helper.GetFilesByID(c, "/app/UploadedFile/Perdin")
 }
 

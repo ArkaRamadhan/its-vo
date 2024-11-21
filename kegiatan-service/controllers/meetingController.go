@@ -1,10 +1,8 @@
 package controllers
 
 import (
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
@@ -31,7 +29,7 @@ func UploadHandlerMeeting(c *gin.Context) {
 }
 
 func GetFilesByIDMeeting(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/meeting")
 }
 
 func DeleteFileHandlerMeeting(c *gin.Context) {
@@ -114,39 +112,39 @@ func MeetingUpdate(c *gin.Context) {
 	var requestBody MeetingRequest
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Printf("Error binding JSON: %v", err)
-        helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
-        return
-    }
+		helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		return
+	}
 
-    var tanggalTarget, tanggalActual *time.Time
-    if requestBody.TanggalActual != nil {
-        dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
-        parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.TanggalActual, dateFormats)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
-            return
-        }
-        tanggalActual = parsedTanggal
-    }
-    if requestBody.TanggalTarget != nil {
-        dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
-        parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.TanggalTarget, dateFormats)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
-            return
-        }
-        tanggalTarget = parsedTanggal
-    }
+	var tanggalTarget, tanggalActual *time.Time
+	if requestBody.TanggalActual != nil {
+		dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
+		parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.TanggalActual, dateFormats)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
+			return
+		}
+		tanggalActual = parsedTanggal
+	}
+	if requestBody.TanggalTarget != nil {
+		dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
+		parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.TanggalTarget, dateFormats)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
+			return
+		}
+		tanggalTarget = parsedTanggal
+	}
 
-    // Assuming you are updating a Memo record
+	// Assuming you are updating a Memo record
 	id := c.Param("id") // or however you get the ID
 	var mt models.Meeting
 	if err := initializers.DB.First(&mt, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "meeting tidak ditemukan"})
-        return
-    }
+		return
+	}
 
-    // Update the memo with new data
+	// Update the memo with new data
 	if requestBody.Task != nil {
 		mt.Task = requestBody.Task
 	}
@@ -183,7 +181,7 @@ func MeetingDelete(c *gin.Context) {
 
 func ExportMeetingHandler(c *gin.Context) {
 	f := excelize.NewFile()
-	
+
 	ExportMeetingToExcel(c, f, "MEETING", true)
 }
 
@@ -213,11 +211,11 @@ func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus: func(data interface{}) string {
-            if mt, ok := data.(*models.Meeting); ok && mt.Status != nil {
-                return *mt.Status
-            }
-            return "Pending" // nilai default
-        },
+			if mt, ok := data.(*models.Meeting); ok && mt.Status != nil {
+				return *mt.Status
+			}
+			return "Pending" // nilai default
+		},
 		CustomStyles: &helper.CustomStyles{
 			StatusStyles: map[string]*excelize.Style{
 				"Done": {
@@ -228,7 +226,7 @@ func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 						Pattern: 1,
 					},
 					Alignment: helper.CenterAlignment,
-					Border: helper.BorderBlack,
+					Border:    helper.BorderBlack,
 				},
 				"On Progress": {
 					Font: helper.FontBlack,
@@ -276,98 +274,142 @@ func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 	return nil
 }
 
+// func ImportExcelMeeting(c *gin.Context) {
+// 	// Mengambil file dari form upload
+// 	file, _, err := c.Request.FormFile("file")
+// 	if err != nil {
+// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
+// 		return
+// 	}
+// 	defer file.Close()
+
+// 	// Simpan file sementara jika perlu
+// 	tempFile, err := os.CreateTemp("", "*.xlsx")
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
+// 		return
+// 	}
+// 	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
+
+// 	// Salin file dari request ke file sementara
+// 	if _, err := file.Seek(0, 0); err != nil {
+// 		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
+// 		return
+// 	}
+// 	if _, err := io.Copy(tempFile, file); err != nil {
+// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
+// 		return
+// 	}
+
+// 	// Buka file Excel dari file sementara
+// 	tempFile.Seek(0, 0) // Reset pointer ke awal file
+// 	f, err := excelize.OpenFile(tempFile.Name())
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
+// 		return
+// 	}
+// 	defer f.Close()
+
+// 	// Pilih sheet
+// 	sheetName := "MEETING"
+// 	rows, err := f.GetRows(sheetName)
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
+// 		return
+// 	}
+
+// 	// Loop melalui baris dan simpan ke database
+// 	for i, row := range rows {
+// 		if i == 0 {
+// 			// Lewati header baris jika ada
+// 			continue
+// 		}
+// 		if len(row) < 7 {
+// 			// Pastikan ada cukup kolom
+// 			continue
+// 		}
+// 		task := row[0]
+// 		tindakLanjut := row[1]
+// 		status := row[2]
+// 		updatePengerjaan := row[3]
+// 		pic := row[4]
+// 		tanggalTargetString := row[5]
+// 		tanggalActualString := row[6]
+
+// 		// Parse tanggal
+// 		tanggalTarget, err := time.Parse("2006-01-02", tanggalTargetString)
+// 		if err != nil {
+// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
+// 			return
+// 		}
+// 		tanggalActual, err := time.Parse("2006-01-02", tanggalActualString)
+// 		if err != nil {
+// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
+// 			return
+// 		}
+
+// 		meeting := models.Meeting{
+// 			Task:             &task,
+// 			TindakLanjut:     &tindakLanjut,
+// 			Status:           &status,
+// 			UpdatePengerjaan: &updatePengerjaan,
+// 			Pic:              &pic,
+// 			TanggalTarget:    &tanggalTarget,
+// 			TanggalActual:    &tanggalActual,
+// 			CreateBy:         c.MustGet("username").(string),
+// 		}
+
+// 		// Simpan ke database
+// 		if err := initializers.DB.Create(&meeting).Error; err != nil {
+// 			log.Printf("Error saving record from row %d: %v", i+1, err)
+// 			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
+// 			return
+// 		}
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport."})
+// }
+
 func ImportExcelMeeting(c *gin.Context) {
-	// Mengambil file dari form upload
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
+	config := helper.ExcelImportConfig{
+		SheetName:   "MEETING",
+		MinColumns:  2,
+		HeaderRows:  1,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Ambil data dari kolom
+			task := helper.GetColumn(row, 0)
+			tindakLanjut := helper.GetColumn(row, 1)
+			status := helper.GetColumn(row, 2)
+			updatePengerjaan := helper.GetColumn(row, 3)
+			pic := helper.GetColumn(row, 4)
+			tanggalTargetStr := helper.GetColumn(row, 5)
+			tanggalActualStr := helper.GetColumn(row, 6)
 
-	// Simpan file sementara jika perlu
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
+			// Parse tanggal
+			tanggalTarget, _ := helper.ParseDateWithFormats(tanggalTargetStr)
+			tanggalActual, _ := helper.ParseDateWithFormats(tanggalActualStr)
 
-	// Salin file dari request ke file sementara
-	if _, err := file.Seek(0, 0); err != nil {
-		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
-		return
-	}
-	if _, err := io.Copy(tempFile, file); err != nil {
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
+			// Buat dan simpan memo
+			meeting := models.Meeting{
+				Task:             &task,
+				TindakLanjut:     &tindakLanjut,
+				Status:           &status,
+				UpdatePengerjaan: &updatePengerjaan,
+				Pic:              &pic,
+				TanggalTarget:    tanggalTarget,
+				TanggalActual:    tanggalActual,
+				CreateBy:         c.MustGet("username").(string),
+			}
+
+			return initializers.DB.Create(&meeting).Error
+		},
 	}
 
-	// Buka file Excel dari file sementara
-	tempFile.Seek(0, 0) // Reset pointer ke awal file
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	// Pilih sheet
-	sheetName := "MEETING"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	// Loop melalui baris dan simpan ke database
-	for i, row := range rows {
-		if i == 0 {
-			// Lewati header baris jika ada
-			continue
-		}
-		if len(row) < 7 {
-			// Pastikan ada cukup kolom
-			continue
-		}
-		task := row[0]
-		tindakLanjut := row[1]
-		status := row[2]
-		updatePengerjaan := row[3]
-		pic := row[4]
-		tanggalTargetString := row[5]
-		tanggalActualString := row[6]
-
-		// Parse tanggal
-		tanggalTarget, err := time.Parse("2006-01-02", tanggalTargetString)
-		if err != nil {
-			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-			return
-		}
-		tanggalActual, err := time.Parse("2006-01-02", tanggalActualString)
-		if err != nil {
-			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-			return
-		}
-
-		meeting := models.Meeting{
-			Task:             &task,
-			TindakLanjut:     &tindakLanjut,
-			Status:           &status,
-			UpdatePengerjaan: &updatePengerjaan,
-			Pic:              &pic,
-			TanggalTarget:    &tanggalTarget,
-			TanggalActual:    &tanggalActual,
-			CreateBy:         c.MustGet("username").(string),
-		}
-
-		// Simpan ke database
-		if err := initializers.DB.Create(&meeting).Error; err != nil {
-			log.Printf("Error saving record from row %d: %v", i+1, err)
-			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
-			return
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport."})
+	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

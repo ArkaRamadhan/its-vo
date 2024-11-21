@@ -1,11 +1,8 @@
 package controllers
 
 import (
-	"io"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
@@ -30,7 +27,7 @@ func UploadHandlerSuratMasuk(c *gin.Context) {
 }
 
 func GetFilesByIDSuratMasuk(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/suratmasuk")
 }
 
 func DeleteFileHandlerSuratMasuk(c *gin.Context) {
@@ -101,30 +98,30 @@ func SuratMasukUpdate(c *gin.Context) {
 	var requestBody SuratMasukRequest
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Printf("Error binding JSON: %v", err)
-        helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
-        return
-    }
+		helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		return
+	}
 
-    var tanggal *time.Time
-    if requestBody.Tanggal != nil {
-        dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
-        parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
-            return
-        }
-        tanggal = parsedTanggal
-    }
+	var tanggal *time.Time
+	if requestBody.Tanggal != nil {
+		dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
+		parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
+			return
+		}
+		tanggal = parsedTanggal
+	}
 
-    // Assuming you are updating a Memo record
+	// Assuming you are updating a Memo record
 	id := c.Param("id") // or however you get the ID
 	var bc models.SuratMasuk
 	if err := initializers.DB.First(&bc, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "surat masuk tidak ditemukan"})
-        return
-    }
+		return
+	}
 
-    // Update the memo with new data
+	// Update the memo with new data
 	if requestBody.NoSurat != nil {
 		bc.NoSurat = requestBody.NoSurat
 	}
@@ -140,7 +137,7 @@ func SuratMasukUpdate(c *gin.Context) {
 	if tanggal != nil {
 		bc.Tanggal = tanggal
 	}
-	
+
 	if err := initializers.DB.Save(&bc).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update surat keluar: " + err.Error()})
 		return
@@ -211,124 +208,163 @@ func excelDateToTimeSuratMasuk(excelDate int) (time.Time, error) {
 	return baseDate.Add(days), nil
 }
 
+// func ImportExcelSuratMasuk(c *gin.Context) {
+// 	// Mengambil file dari form upload
+// 	file, _, err := c.Request.FormFile("file")
+// 	if err != nil {
+// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
+// 		return
+// 	}
+// 	defer file.Close()
+
+// 	// Simpan file sementara jika perlu
+// 	tempFile, err := os.CreateTemp("", "*.xlsx")
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
+// 		return
+// 	}
+// 	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
+
+// 	// Salin file dari request ke file sementara
+// 	if _, err := file.Seek(0, 0); err != nil {
+// 		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
+// 		return
+// 	}
+// 	if _, err := io.Copy(tempFile, file); err != nil {
+// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
+// 		return
+// 	}
+
+// 	// Buka file Excel dari file sementara
+// 	tempFile.Seek(0, 0) // Reset pointer ke awal file
+// 	f, err := excelize.OpenFile(tempFile.Name())
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
+// 		return
+// 	}
+// 	defer f.Close()
+
+// 	// Pilih sheet
+// 	sheetName := "SURAT MASUK"
+// 	rows, err := f.GetRows(sheetName)
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
+// 		return
+// 	}
+
+// 	log.Println("Processing rows...") // Log untuk memulai proses baris
+
+// 	// Definisikan semua format tanggal yang mungkin
+// 	dateFormats := []string{
+// 		"2 January 2006",
+// 		"02-Jan-06",
+// 		"2006-01-02",
+// 		"02-01-2006",
+// 		"01/02/2006",
+// 		"2006.01.02",
+// 		"02/01/2006",
+// 		"Jan 2, 06",
+// 		"Jan 2, 2006",
+// 		"01/02/06",
+// 		"02/01/06",
+// 		"06/02/01",
+// 		"06/01/02",
+// 		"06-Jan-02",
+// 		"02-Jan-06",
+// 		"1-Jan-06",
+// 		"06-Jan-02",
+// 	}
+
+// 	// Loop melalui baris dan simpan ke database
+// 	for i, row := range rows {
+// 		if i == 0 { // Lewati baris pertama yang merupakan header
+// 			continue
+// 		}
+// 		if len(row) < 5 { // Pastikan ada cukup kolom
+// 			log.Printf("Row %d skipped: less than 5 columns filled", i+1)
+// 			continue
+// 		}
+// 		noSurat := row[0]
+// 		title := row[1]
+// 		related_div := row[2]
+// 		destiny_div := row[3]
+// 		tanggalString := row[4]
+
+// 		var tanggal time.Time
+// 		var parseErr error
+
+// 		// Coba konversi dari serial Excel jika tanggalString adalah angka
+// 		if serial, err := strconv.Atoi(tanggalString); err == nil {
+// 			tanggal, parseErr = excelDateToTimeSuratMasuk(serial)
+// 		} else {
+// 			// Coba parse menggunakan format tanggal yang sudah ada
+// 			for _, format := range dateFormats {
+// 				tanggal, parseErr = time.Parse(format, tanggalString)
+// 				if parseErr == nil {
+// 					break // Keluar dari loop jika parsing berhasil
+// 				}
+// 			}
+// 		}
+
+// 		if parseErr != nil {
+// 			log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
+// 			continue // Lewati baris ini jika format tanggal tidak valid
+// 		}
+
+// 		surat_masuk := models.SuratMasuk{
+// 			NoSurat:    &noSurat,
+// 			Title:      &title,
+// 			RelatedDiv: &related_div,
+// 			DestinyDiv: &destiny_div,
+// 			Tanggal:    &tanggal,
+// 			CreateBy:   c.MustGet("username").(string),
+// 		}
+
+// 		// Simpan ke database
+// 		if err := initializers.DB.Create(&surat_masuk).Error; err != nil {
+// 			log.Printf("Error saving record from row %d: %v", i+1, err)
+// 			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
+// 			return
+// 		}
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
+// }
+
 func ImportExcelSuratMasuk(c *gin.Context) {
-	// Mengambil file dari form upload
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
+	config := helper.ExcelImportConfig{
+		SheetName:   "SURAT MASUK",
+		MinColumns:  2,
+		HeaderRows:  5,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Ambil data dari kolom
+			noSurat := helper.GetColumn(row, 0)
+			title := helper.GetColumn(row, 1)
+			related_div := helper.GetColumn(row, 2)
+			destiny_div := helper.GetColumn(row, 3)
+			tanggalStr := helper.GetColumn(row, 4)
 
-	// Simpan file sementara jika perlu
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
+			// Parse tanggal
+			tanggal, _ := helper.ParseDateWithFormats(tanggalStr)
 
-	// Salin file dari request ke file sementara
-	if _, err := file.Seek(0, 0); err != nil {
-		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
-		return
-	}
-	if _, err := io.Copy(tempFile, file); err != nil {
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
-	}
-
-	// Buka file Excel dari file sementara
-	tempFile.Seek(0, 0) // Reset pointer ke awal file
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	// Pilih sheet
-	sheetName := "SURAT MASUK"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-		return
-	}
-
-	log.Println("Processing rows...") // Log untuk memulai proses baris
-
-	// Definisikan semua format tanggal yang mungkin
-	dateFormats := []string{
-		"2 January 2006",
-		"02-Jan-06",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"06-Jan-02",
-		"02-Jan-06",
-		"1-Jan-06",
-		"06-Jan-02",
-	}
-
-	// Loop melalui baris dan simpan ke database
-	for i, row := range rows {
-		if i == 0 { // Lewati baris pertama yang merupakan header
-			continue
-		}
-		if len(row) < 5 { // Pastikan ada cukup kolom
-			log.Printf("Row %d skipped: less than 5 columns filled", i+1)
-			continue
-		}
-		noSurat := row[0]
-		title := row[1]
-		related_div := row[2]
-		destiny_div := row[3]
-		tanggalString := row[4]
-
-		var tanggal time.Time
-		var parseErr error
-
-		// Coba konversi dari serial Excel jika tanggalString adalah angka
-		if serial, err := strconv.Atoi(tanggalString); err == nil {
-			tanggal, parseErr = excelDateToTimeSuratMasuk(serial)
-		} else {
-			// Coba parse menggunakan format tanggal yang sudah ada
-			for _, format := range dateFormats {
-				tanggal, parseErr = time.Parse(format, tanggalString)
-				if parseErr == nil {
-					break // Keluar dari loop jika parsing berhasil
-				}
+			// Buat dan simpan surat masuk
+			surat_masuk := models.SuratMasuk{
+				Tanggal:    tanggal,
+				NoSurat:    &noSurat,
+				Title:      &title,
+				RelatedDiv: &related_div,
+				DestinyDiv: &destiny_div,
+				CreateBy:   c.MustGet("username").(string),
 			}
-		}
 
-		if parseErr != nil {
-			log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
-			continue // Lewati baris ini jika format tanggal tidak valid
-		}
+			return initializers.DB.Create(&surat_masuk).Error
+		},
+	}
 
-		surat_masuk := models.SuratMasuk{
-			NoSurat:    &noSurat,
-			Title:      &title,
-			RelatedDiv: &related_div,
-			DestinyDiv: &destiny_div,
-			Tanggal:    &tanggal,
-			CreateBy:   c.MustGet("username").(string),
-		}
-
-		// Simpan ke database
-		if err := initializers.DB.Create(&surat_masuk).Error; err != nil {
-			log.Printf("Error saving record from row %d: %v", i+1, err)
-			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
-			return
-		}
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})

@@ -29,7 +29,7 @@ func UploadHandlerBeritaAcara(c *gin.Context) {
 }
 
 func GetFilesByIDBeritaAcara(c *gin.Context) {
-	helper.GetFilesByID(c, "/app/UploadedFile/beritaacara")
+	helper.GetFilesByID(c, "/app/UploadedFile/beritaacara") 
 }
 
 func DeleteFileHandlerBeritaAcara(c *gin.Context) {
