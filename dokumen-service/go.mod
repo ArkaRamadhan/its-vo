@@ -3,7 +3,7 @@ module github.com/arkaramadhan/its-vo/dokumen-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241120090647-c73f50349b13
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241121023657-55625263cf02
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0

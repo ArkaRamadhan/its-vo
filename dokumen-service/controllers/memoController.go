@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/arkaramadhan/its-vo/dokumen-service/models"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
+
 )
 
 type MemoRequest struct {
@@ -31,7 +30,7 @@ func UploadHandlerMemo(c *gin.Context) {
 }
 
 func GetFilesByIDMemo(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/memo")
 }
 
 func DeleteFileHandlerMemo(c *gin.Context) {
@@ -43,11 +42,11 @@ func DownloadFileHandlerMemo(c *gin.Context) {
 }
 
 func GetLatestMemoNumber(category string) (string, error) {
-    var lastMemo models.Memo
-    if category != "ITS-SAG" && category != "ITS-ISO" {
-        return "", fmt.Errorf("kategori tidak valid")
-    }
-    return helper.GetLatestDocumentNumber(strings.TrimPrefix(category, "ITS-"), "M", &lastMemo, "no_memo", "NoMemo", "dokumen.memos")
+	var lastMemo models.Memo
+	if category != "ITS-SAG" && category != "ITS-ISO" {
+		return "", fmt.Errorf("kategori tidak valid")
+	}
+	return helper.GetLatestDocumentNumber(strings.TrimPrefix(category, "ITS-"), "M", &lastMemo, "no_memo", "NoMemo", "dokumen.memos")
 }
 
 func MemoIndex(c *gin.Context) {
@@ -122,50 +121,49 @@ func MemoShow(c *gin.Context) {
 }
 
 func MemoUpdate(c *gin.Context) {
-    var requestBody MemoRequest
-    if err := c.BindJSON(&requestBody); err != nil {
-        log.Printf("Error binding JSON: %v", err)
-        helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
-        return
-    }
+	var requestBody MemoRequest
+	if err := c.BindJSON(&requestBody); err != nil {
+		log.Printf("Error binding JSON: %v", err)
+		helper.RespondError(c, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		return
+	}
 
-    var tanggal *time.Time
-    if requestBody.Tanggal != nil {
-        dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
-        parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
-        if err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
-            return
-        }
-        tanggal = parsedTanggal
-    }
+	var tanggal *time.Time
+	if requestBody.Tanggal != nil {
+		dateFormats := []string{"2006-01-02", "2006-01-02T15:04:05Z07:00", "January 2, 2006", "Jan 2, 2006", "02/01/2006"}
+		parsedTanggal, err := helper.ParseFlexibleDate(*requestBody.Tanggal, dateFormats)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid format tanggal: " + err.Error()})
+			return
+		}
+		tanggal = parsedTanggal
+	}
 
-    // Assuming you are updating a Memo record
-    id := c.Param("id") // or however you get the ID
-    var memo models.Memo
-    if err := initializers.DB.First(&memo, id).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"message": "Memo not found"})
-        return
-    }
+	// Assuming you are updating a Memo record
+	id := c.Param("id") // or however you get the ID
+	var memo models.Memo
+	if err := initializers.DB.First(&memo, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Memo not found"})
+		return
+	}
 
-    // Update the memo with new data
-    if tanggal != nil {
-        memo.Tanggal = tanggal
-    }
-    if requestBody.Perihal != nil {
-        memo.Perihal = requestBody.Perihal
-    }
-    if requestBody.Pic != nil {
-        memo.Pic = requestBody.Pic
-    }
-	
+	// Update the memo with new data
+	if tanggal != nil {
+		memo.Tanggal = tanggal
+	}
+	if requestBody.Perihal != nil {
+		memo.Perihal = requestBody.Perihal
+	}
+	if requestBody.Pic != nil {
+		memo.Pic = requestBody.Pic
+	}
 
-    if err := initializers.DB.Save(&memo).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update memo: " + err.Error()})
-        return
-    }
+	if err := initializers.DB.Save(&memo).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update memo: " + err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Memo updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Memo updated successfully"})
 }
 
 func MemoDelete(c *gin.Context) {
@@ -179,30 +177,30 @@ func ExportMemoHandler(c *gin.Context) {
 }
 
 func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
-    // 1. Ambil data dari database
-    var memos []models.Memo
-    initializers.DB.Table("dokumen.memos").Find(&memos)
+	// 1. Ambil data dari database
+	var memos []models.Memo
+	initializers.DB.Table("dokumen.memos").Find(&memos)
 
-    // 2. Konversi ke interface ExcelData
-    var excelData []helper.ExcelData
-    for _, ba := range memos {
-        excelData = append(excelData, &ba)
-    }
+	// 2. Konversi ke interface ExcelData
+	var excelData []helper.ExcelData
+	for _, ba := range memos {
+		excelData = append(excelData, &ba)
+	}
 
-    // 3. Siapkan konfigurasi
-    config := helper.ExcelConfig{
-        SheetName: "MEMO",
-        Columns: []helper.ExcelColumn{
-            {Header: "Tanggal", Width: 20},
-            {Header: "No Memo", Width: 27},
-            {Header: "Perihal", Width: 40},
-            {Header: "PIC", Width: 20},
-        },
-        Data:         excelData,
-        IsSplitSheet: true,
+	// 3. Siapkan konfigurasi
+	config := helper.ExcelConfig{
+		SheetName: "MEMO",
+		Columns: []helper.ExcelColumn{
+			{Header: "Tanggal", Width: 20},
+			{Header: "No Memo", Width: 27},
+			{Header: "Perihal", Width: 40},
+			{Header: "PIC", Width: 20},
+		},
+		Data:         excelData,
+		IsSplitSheet: true,
 		GetStatus:    nil,
 		SplitType:    helper.SplitVertical,
-    }
+	}
 
 	if f != nil {
 		helper.ExportToSheet(f, config)
@@ -223,36 +221,38 @@ func ExportMemoToExcel(c *gin.Context, f *excelize.File, sheetName string, isSta
 }
 
 func ImportExcelMemo(c *gin.Context) {
-    config := helper.ExcelImportConfig{
-        SheetName: "MEMO",
-        MinColumns: 2,
-        ProcessRow: func(row []string, rowIndex int) error {
-            // Ambil data dari kolom
-            tanggalStr := helper.GetColumnValue(row, 0)
-            noMemo := helper.GetColumnValue(row, 1)
-            perihal := helper.GetColumnValue(row, 2)
-            pic := helper.GetColumnValue(row, 3)
+	config := helper.ExcelImportConfig{
+		SheetName:   "MEMO",
+		MinColumns:  2,
+		HeaderRows:  1,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Ambil data dari kolom
+			tanggalStr := helper.GetColumn(row, 0)
+			noMemo := helper.GetColumn(row, 1)
+			perihal := helper.GetColumn(row, 2)
+			pic := helper.GetColumn(row, 3)
 
-            // Parse tanggal
-            tanggal, _ := helper.ParseDateWithMultipleFormats(tanggalStr, helper.CommonDateFormats)
+			// Parse tanggal
+			tanggal, _ := helper.ParseDateWithFormats(tanggalStr)
 
-            // Buat dan simpan memo
-            memo := models.Memo{
-                Tanggal:  tanggal,
-                NoMemo:   &noMemo,
-                Perihal:  &perihal,
-                Pic:      &pic,
-                CreateBy: c.MustGet("username").(string),
-            }
+			// Buat dan simpan memo
+			memo := models.Memo{
+				Tanggal:  tanggal,
+				NoMemo:   &noMemo,
+				Perihal:  &perihal,
+				Pic:      &pic,
+				CreateBy: c.MustGet("username").(string),
+			}
 
-            return initializers.DB.Create(&memo).Error
-        },
-    }
+			return initializers.DB.Create(&memo).Error
+		},
+	}
 
-    if err := helper.ImportExcelFile(c, config); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-        return
-    }
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
+	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
 }

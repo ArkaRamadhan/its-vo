@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/arkaramadhan/its-vo/dokumen-service/models"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
+
 )
 
 type BcRequest struct {
@@ -30,7 +29,7 @@ func UploadHandlerBeritaAcara(c *gin.Context) {
 }
 
 func GetFilesByIDBeritaAcara(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/beritaacara")
 }
 
 func DeleteFileHandlerBeritaAcara(c *gin.Context) {
@@ -216,177 +215,59 @@ func ExportBeritaAcaraToExcel(c *gin.Context, f *excelize.File, sheetName string
 }
 
 func ImportExcelBeritaAcara(c *gin.Context) {
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
+	config := helper.ExcelImportConfig{
+		SheetName:   "BERITA ACARA",
+		MinColumns:  2,
+		HeaderRows:  1,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Proses data SAG (kolom kiri)
+			if len(row) >= 4 && helper.HasNonEmptyColumns(row[:4], 2) {
+				tanggalSAG, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 0))
+				noSuratSAG := helper.GetColumn(row, 1)
+				perihalSAG := helper.GetColumn(row, 2)
+				picSAG := helper.GetColumn(row, 3)
 
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
+				beritaAcaraSAG := models.BeritaAcara{
+					Tanggal:  tanggalSAG,
+					NoSurat:  &noSuratSAG,
+					Perihal:  &perihalSAG,
+					Pic:      &picSAG,
+					CreateBy: c.MustGet("username").(string),
+				}
 
-	if _, err := io.Copy(tempFile, file); err != nil {
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
-	}
-
-	tempFile.Seek(0, 0)
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	sheetName := "BERITA ACARA"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-		return
-	}
-
-	log.Println("Processing rows...")
-
-	// Definisikan format tanggal untuk SAG
-	dateFormatsSAG := []string{
-		"02-Jan-06",
-		"06-Jan-02",
-		"2 January 2006",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"1-Jan-06",
-	}
-
-	// Definisikan format tanggal untuk ISO
-	dateFormatsISO := []string{
-		"06-Jan-02",
-		"02-Jan-06",
-		"2 January 2006",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"1-Jan-06",
-	}
-
-	for i, row := range rows {
-		if i == 0 { // Lewati baris pertama yang merupakan header
-			continue
-		}
-		// Pastikan minimal 2 kolom terisi
-		nonEmptyColumns := 0
-		for _, col := range row {
-			if col != "" {
-				nonEmptyColumns++
-			}
-		}
-		if nonEmptyColumns < 2 {
-			log.Printf("Baris %d dilewati: hanya %d kolom terisi", i+1, nonEmptyColumns)
-			continue
-		}
-
-		// Ambil data SAG dari kolom kiri
-		tanggalSAGStr, noSuratSAG, perihalSAG, picSAG := "", "", "", ""
-		if len(row) > 0 {
-			tanggalSAGStr = row[0]
-		}
-		if len(row) > 1 {
-			noSuratSAG = row[1]
-		}
-		if len(row) > 2 {
-			perihalSAG = row[2]
-		}
-		if len(row) > 3 {
-			picSAG = row[3]
-		}
-
-		// Ambil data ISO dari kolom kanan
-		tanggalISOStr, noSuratISO, perihalISO, picISO := "", "", "", ""
-		if len(row) > 5 {
-			tanggalISOStr = row[5]
-		}
-		if len(row) > 6 {
-			noSuratISO = row[6]
-		}
-		if len(row) > 7 {
-			perihalISO = row[7]
-		}
-		if len(row) > 8 {
-			picISO = row[8]
-		}
-
-		// Proses tanggal SAG
-		var tanggalSAG *time.Time
-		if tanggalSAGStr != "" {
-			for _, format := range dateFormatsSAG {
-				parsedTanggal, err := time.Parse(format, tanggalSAGStr)
-				if err == nil {
-					tanggalSAG = &parsedTanggal
-					break
+				if err := initializers.DB.Create(&beritaAcaraSAG).Error; err != nil {
+					log.Printf("Error saving SAG record from row %d: %v", rowIndex+1, err)
 				}
 			}
-		}
 
-		// Proses tanggal ISO
-		var tanggalISO *time.Time
-		if tanggalISOStr != "" {
-			for _, format := range dateFormatsISO {
-				parsedTanggal, err := time.Parse(format, tanggalISOStr)
-				if err == nil {
-					tanggalISO = &parsedTanggal
-					break
+			// Proses data ISO (kolom kanan)
+			if len(row) >= 9 && helper.HasNonEmptyColumns(row[5:9], 2) {
+				tanggalISO, _ := helper.ParseDateWithFormats(helper.GetColumn(row, 5))
+				noSuratISO := helper.GetColumn(row, 6)
+				perihalISO := helper.GetColumn(row, 7)
+				picISO := helper.GetColumn(row, 8)
+
+				beritaAcaraISO := models.BeritaAcara{
+					Tanggal:  tanggalISO,
+					NoSurat:  &noSuratISO,
+					Perihal:  &perihalISO,
+					Pic:      &picISO,
+					CreateBy: c.MustGet("username").(string),
+				}
+
+				if err := initializers.DB.Create(&beritaAcaraISO).Error; err != nil {
+					log.Printf("Error saving ISO record from row %d: %v", rowIndex+1, err)
 				}
 			}
-		}
 
-		// Simpan data SAG
-		beritaAcaraSAG := models.BeritaAcara{
-			Tanggal:  tanggalSAG,
-			NoSurat:  &noSuratSAG,
-			Perihal:  &perihalSAG,
-			Pic:      &picSAG,
-			CreateBy: c.MustGet("username").(string),
-		}
-		if err := initializers.DB.Create(&beritaAcaraSAG).Error; err != nil {
-			log.Printf("Error saving SAG record from row %d: %v", i+1, err)
-		} else {
-			log.Printf("SAG Row %d imported successfully", i+1)
-		}
+			return nil
+		},
+	}
 
-		// Simpan data ISO
-		beritaAcaraISO := models.BeritaAcara{
-			Tanggal:  tanggalISO,
-			NoSurat:  &noSuratISO,
-			Perihal:  &perihalISO,
-			Pic:      &picISO,
-			CreateBy: c.MustGet("username").(string),
-		}
-		if err := initializers.DB.Create(&beritaAcaraISO).Error; err != nil {
-			log.Printf("Error saving ISO record from row %d: %v", i+1, err)
-		} else {
-			log.Printf("ISO Row %d imported successfully", i+1)
-		}
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})

@@ -2,11 +2,8 @@ package controllers
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -31,7 +28,7 @@ func UploadHandlerPerdin(c *gin.Context) {
 }
 
 func GetFilesByIDPerdin(c *gin.Context) {
-	helper.GetFilesByID(c)
+	helper.GetFilesByID(c, "/app/UploadedFile/Perdin")
 }
 
 func DeleteFileHandlerPerdin(c *gin.Context) {
@@ -217,121 +214,158 @@ func excelDateToTimePerdin(excelDate int) (time.Time, error) {
 	return baseDate.Add(days), nil
 }
 
+// func ImportExcelPerdin(c *gin.Context) {
+// 	file, _, err := c.Request.FormFile("file")
+// 	if err != nil {
+// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
+// 		return
+// 	}
+// 	defer file.Close()
+
+// 	tempFile, err := os.CreateTemp("", "*.xlsx")
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
+// 		return
+// 	}
+// 	defer os.Remove(tempFile.Name())
+
+// 	if _, err := io.Copy(tempFile, file); err != nil {
+// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
+// 		return
+// 	}
+
+// 	tempFile.Seek(0, 0)
+// 	f, err := excelize.OpenFile(tempFile.Name())
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
+// 		return
+// 	}
+// 	defer f.Close()
+
+// 	sheetName := "PERDIN"
+// 	rows, err := f.GetRows(sheetName)
+// 	if err != nil {
+// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
+// 		return
+// 	}
+
+// 	log.Println("Processing rows...")
+
+// 	// Definisikan semua format tanggal yang mungkin
+// 	dateFormats := []string{
+// 		"02-Jan-06",
+// 		"06-Jan-02",
+// 		"2 January 2006",
+// 		"2006-01-02",
+// 		"02-01-2006",
+// 		"01/02/2006",
+// 		"2006.01.02",
+// 		"02/01/2006",
+// 		"Jan 2, 06",
+// 		"Jan 2, 2006",
+// 		"01/02/06",
+// 		"02/01/06",
+// 		"06/02/01",
+// 		"06/01/02",
+// 		"1-Jan-06",
+// 		"06-Jan-02",
+// 	}
+
+// 	for i, row := range rows {
+// 		if i == 0 { // Lewati baris pertama yang merupakan header
+// 			continue
+// 		}
+// 		if len(row) < 2 { // Pastikan ada cukup kolom
+// 			log.Printf("Baris %d dilewati: kurang dari 2 kolom terisi", i+1)
+// 			continue
+// 		}
+
+// 		noPerdin := helper.GetStringOrNil(helper.GetColumn(row, 0))
+// 		tanggalStr := helper.GetStringOrNil(helper.GetColumn(row, 1))
+// 		hotel := helper.GetStringOrNil(helper.GetColumn(row, 2))
+// 		transport := helper.GetStringOrNil(helper.GetColumn(row, 3))
+
+// 		var tanggalTime *time.Time
+// 		var parseErr error // Deklarasi ulang di setiap iterasi untuk menghindari nilai residual
+
+// 		if tanggalStr != nil {
+// 			if serial, err := strconv.Atoi(*tanggalStr); err == nil {
+// 				parsed, err := excelDateToTimePerdin(serial)
+// 				if err == nil {
+// 					tanggalTime = &parsed
+// 				} else {
+// 					parseErr = err
+// 				}
+// 			} else {
+// 				for _, format := range dateFormats {
+// 					parsed, err := time.Parse(format, *tanggalStr)
+// 					if err == nil {
+// 						tanggalTime = &parsed
+// 						break
+// 					} else {
+// 						parseErr = err
+// 					}
+// 				}
+// 			}
+
+// 			if parseErr != nil {
+// 				log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
+// 				continue // Lewati baris ini jika format tanggal tidak valid
+// 			}
+// 		}
+
+// 		// Buat objek Perdin dengan data yang diambil
+// 		perdin := models.Perdin{
+// 			Tanggal:   tanggalTime,
+// 			NoPerdin:  noPerdin,
+// 			Hotel:     hotel,
+// 			Transport: transport,
+// 			CreateBy:  c.MustGet("username").(string),
+// 		}
+
+// 		// Simpan objek Perdin ke dalam database
+// 		if err := initializers.DB.Create(&perdin).Error; err != nil {
+// 			log.Printf("Error menyimpan record dari baris %d: %v", i+1, err)
+// 			continue
+// 		}
+// 		log.Printf("Baris %d diimpor dengan sukses", i+1)
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
+// }
+
 func ImportExcelPerdin(c *gin.Context) {
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-		return
-	}
-	defer file.Close()
+	config := helper.ExcelImportConfig{
+		SheetName:   "PERDIN",
+		MinColumns:  2,
+		HeaderRows:  1,
+		LogProgress: true,
+		ProcessRow: func(row []string, rowIndex int) error {
+			// Ambil data dari kolom
+			noPerdin := helper.GetColumn(row, 0)
+			tanggalStr := helper.GetColumn(row, 1)
+			hotel := helper.GetColumn(row, 2)
+			transport := helper.GetColumn(row, 3)
 
-	tempFile, err := os.CreateTemp("", "*.xlsx")
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-		return
-	}
-	defer os.Remove(tempFile.Name())
+			// Parse tanggal
+			tanggal, _ := helper.ParseDateWithFormats(tanggalStr)
 
-	if _, err := io.Copy(tempFile, file); err != nil {
-		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-		return
-	}
-
-	tempFile.Seek(0, 0)
-	f, err := excelize.OpenFile(tempFile.Name())
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	sheetName := "PERDIN"
-	rows, err := f.GetRows(sheetName)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-		return
-	}
-
-	log.Println("Processing rows...")
-
-	// Definisikan semua format tanggal yang mungkin
-	dateFormats := []string{
-		"02-Jan-06",
-		"06-Jan-02",
-		"2 January 2006",
-		"2006-01-02",
-		"02-01-2006",
-		"01/02/2006",
-		"2006.01.02",
-		"02/01/2006",
-		"Jan 2, 06",
-		"Jan 2, 2006",
-		"01/02/06",
-		"02/01/06",
-		"06/02/01",
-		"06/01/02",
-		"1-Jan-06",
-		"06-Jan-02",
-	}
-
-	for i, row := range rows {
-		if i == 0 { // Lewati baris pertama yang merupakan header
-			continue
-		}
-		if len(row) < 2 { // Pastikan ada cukup kolom
-			log.Printf("Baris %d dilewati: kurang dari 2 kolom terisi", i+1)
-			continue
-		}
-
-		noPerdin := helper.GetStringOrNil(helper.GetColumn(row, 0))
-		tanggalStr := helper.GetStringOrNil(helper.GetColumn(row, 1))
-		hotel := helper.GetStringOrNil(helper.GetColumn(row, 2))
-		transport := helper.GetStringOrNil(helper.GetColumn(row, 3))
-
-		var tanggalTime *time.Time
-		var parseErr error // Deklarasi ulang di setiap iterasi untuk menghindari nilai residual
-
-		if tanggalStr != nil {
-			if serial, err := strconv.Atoi(*tanggalStr); err == nil {
-				parsed, err := excelDateToTimePerdin(serial)
-				if err == nil {
-					tanggalTime = &parsed
-				} else {
-					parseErr = err
-				}
-			} else {
-				for _, format := range dateFormats {
-					parsed, err := time.Parse(format, *tanggalStr)
-					if err == nil {
-						tanggalTime = &parsed
-						break
-					} else {
-						parseErr = err
-					}
-				}
+			// Buat dan simpan memo
+			perdin := models.Perdin{
+				Tanggal:   tanggal,
+				NoPerdin:  &noPerdin,
+				Hotel:     &hotel,
+				Transport: &transport,
+				CreateBy:  c.MustGet("username").(string),
 			}
 
-			if parseErr != nil {
-				log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
-				continue // Lewati baris ini jika format tanggal tidak valid
-			}
-		}
+			return initializers.DB.Create(&perdin).Error
+		},
+	}
 
-		// Buat objek Perdin dengan data yang diambil
-		perdin := models.Perdin{
-			Tanggal:   tanggalTime,
-			NoPerdin:  noPerdin,
-			Hotel:     hotel,
-			Transport: transport,
-			CreateBy:  c.MustGet("username").(string),
-		}
-
-		// Simpan objek Perdin ke dalam database
-		if err := initializers.DB.Create(&perdin).Error; err != nil {
-			log.Printf("Error menyimpan record dari baris %d: %v", i+1, err)
-			continue
-		}
-		log.Printf("Baris %d diimpor dengan sukses", i+1)
+	if err := helper.ImportExcelFile(c, config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})

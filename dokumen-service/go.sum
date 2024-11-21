@@ -1,5 +1,5 @@
-github.com/arkaramadhan/its-vo/common v0.0.0-20241120090647-c73f50349b13 h1:tfsm7VVXl15WSaBwQDWaZTEl/wDS5y2pAq3QC0URie0=
-github.com/arkaramadhan/its-vo/common v0.0.0-20241120090647-c73f50349b13/go.mod h1:UE1wLoROVuvI0IT4bm2ZMVjaYz/dOL5xVPdJfPafUmo=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241121023657-55625263cf02 h1:BUZGF+ETkrrj8u+f+lJ8DoydrTv0bcZFpm5jJVtQTHA=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241121023657-55625263cf02/go.mod h1:UE1wLoROVuvI0IT4bm2ZMVjaYz/dOL5xVPdJfPafUmo=
 github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe h1:aESkxNFM14REBOTwZynZbwyIMG9wZgvc2DtQcdCOeZY=
 github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe/go.mod h1:2LRLpBZjanOf1QSlzCDwWPniSGOfDW34pH3Qqbm5lXc=
 github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241119025020-c2bb93839afe h1:w2L0wBvTHjOlLyzH4vQUePPRNOtsD692KgXtzl59x38=
