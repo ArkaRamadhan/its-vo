@@ -130,13 +130,13 @@ func UploadHandler(c *gin.Context, baseDir string) {
 	id := c.PostForm("id")
 	file, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File diperlukan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "File diperlukan"})
 		return
 	}
 
 	userID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID tidak valid"})
 		return
 	}
 
@@ -144,7 +144,7 @@ func UploadHandler(c *gin.Context, baseDir string) {
 
 	filePath := filepath.ToSlash(filepath.Join(dir, file.Filename))
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan file"})
 		return
 	}
 
@@ -158,7 +158,7 @@ func UploadHandler(c *gin.Context, baseDir string) {
 	}
 	result := initializers.DB.Table("common.files").Create(&newFile)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan metadata file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menyimpan metadata file"})
 		return
 	}
 
@@ -173,7 +173,7 @@ func GetFilesByID(c *gin.Context, baseDir string) {
 	var files []models.File
 	result := initializers.DB.Table("common.files").Where("file_path LIKE ?", filePathPattern).Find(&files)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal mengambil data file"})
 		return
 	}
 

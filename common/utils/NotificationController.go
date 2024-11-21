@@ -61,7 +61,7 @@ func SetNotification(title string, startTime time.Time, category string) {
 func GetNotifications(c *gin.Context) {
 	var notifications []models.Notification
 	if err := initializers.DB.Table("common.notifications").Find(&notifications).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, notifications)
@@ -71,13 +71,13 @@ func DeleteNotification(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("ID yang diterima untuk dihapus: %s", id) // Tambahkan log ini
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID harus disertakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan"})
 		return
 	}
 
 	// Menghapus notifikasi berdasarkan ID
 	if err := initializers.DB.Table("common.notifications").Where("id = ?", id).Delete(&models.Notification{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 

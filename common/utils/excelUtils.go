@@ -493,7 +493,7 @@ func ExportCalenderToExcel(c *gin.Context, config CalenderConfig) error {
 
 	var buffer bytes.Buffer
 	if err := f.Write(&buffer); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to write Excel buffer: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Failed to write Excel buffer: %v", err)})
 		return err
 	}
 
@@ -502,7 +502,7 @@ func ExportCalenderToExcel(c *gin.Context, config CalenderConfig) error {
 	c.Header("Content-Length", strconv.Itoa(len(buffer.Bytes())))
 	if _, err := c.Writer.Write(buffer.Bytes()); err != nil {
 		log.Printf("Error sending Excel file: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to send Excel file: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Failed to send Excel file: %v", err)})
 		return err
 	}
 	return nil

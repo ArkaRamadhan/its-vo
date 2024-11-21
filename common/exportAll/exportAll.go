@@ -52,14 +52,14 @@ func ExportAll(c *gin.Context) {
 
 	for _, sheet := range sheets {
 		if err := sheet.exporter(c, f, sheet.name, false); err != nil {
-			c.JSON(500, gin.H{"error": fmt.Sprintf("Error exporting %s: %v", sheet.name, err)})
+			c.JSON(500, gin.H{"message": fmt.Sprintf("Error exporting %s: %v", sheet.name, err)})
 			return
 		}
 	}
 
 	var buf bytes.Buffer
 	if err := f.Write(&buf); err != nil {
-		c.JSON(500, gin.H{"error": fmt.Sprintf("Error writing to buffer: %v", err)})
+		c.JSON(500, gin.H{"message": fmt.Sprintf("Error writing to buffer: %v", err)})
 		return
 	}
 
