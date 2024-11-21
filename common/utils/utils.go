@@ -38,6 +38,19 @@ func GetStringOrNil(value string) *string {
 	return &value
 }
 
+func HasNonEmptyColumns(row []string, minNonEmpty int) bool {
+    count := 0
+    for _, col := range row {
+        if col != "" {
+            count++
+        }
+        if count >= minNonEmpty {
+            return true
+        }
+    }
+    return false
+}
+
 func CleanNumericString(input string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsDigit(r) {
