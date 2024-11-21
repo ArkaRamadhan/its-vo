@@ -182,7 +182,7 @@ func GetFilesByID(c *gin.Context, baseDir string) {
 		fileNames = append(fileNames, file.FileName)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"files": fileNames})
+	c.JSON(http.StatusOK, fileNames)
 }
 
 func DeleteFileHandler(c *gin.Context, mainDir string) {
