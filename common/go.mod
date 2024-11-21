@@ -3,11 +3,11 @@ module github.com/arkaramadhan/its-vo/common
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241119025020-c2bb93839afe
-	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241119025020-c2bb93839afe
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241119025020-c2bb93839afe
-	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241119025020-c2bb93839afe
-	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241119025020-c2bb93839afe
+	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241121063156-f25b14a76a87
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241121063156-f25b14a76a87
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241121063156-f25b14a76a87
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241121063156-f25b14a76a87
+	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121105913-52829277178b
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0

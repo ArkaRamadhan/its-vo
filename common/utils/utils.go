@@ -20,7 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
-
 )
 
 func GetColumn(row []string, index int) string {
@@ -39,16 +38,16 @@ func GetStringOrNil(value string) *string {
 }
 
 func HasNonEmptyColumns(row []string, minNonEmpty int) bool {
-    count := 0
-    for _, col := range row {
-        if col != "" {
-            count++
-        }
-        if count >= minNonEmpty {
-            return true
-        }
-    }
-    return false
+	count := 0
+	for _, col := range row {
+		if col != "" {
+			count++
+		}
+		if count >= minNonEmpty {
+			return true
+		}
+	}
+	return false
 }
 
 func CleanNumericString(input string) string {
@@ -417,11 +416,28 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
 
-	if err := db.Table(schema).First(model, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
-		return
+	// Khusus untuk model File, kita perlu mendapatkan path file sebelum menghapus
+	if file, ok := model.(*models.File); ok {
+		// Ambil data file terlebih dahulu
+		if err := db.Table(schema).First(file, id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
+			return
+		}
+
+		// Hapus file fisik
+		if err := os.Remove(file.FilePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "gagal menghapus file fisik: " + err.Error()})
+			return
+		}
+	} else {
+		// Untuk model lain, cek apakah data ada
+		if err := db.Table(schema).First(model, id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
+			return
+		}
 	}
 
+	// Hapus record dari database
 	if err := db.Table(schema).Delete(model).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "gagal menghapus " + modelName + ": " + err.Error()})
 		return

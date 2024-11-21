@@ -47,6 +47,7 @@ func ExportAll(c *gin.Context) {
 		{"PROJECT", project.ExportProjectToExcel},
 
 		{"TIMELINE PROJECT", weekly.ExportTimelineProjectToExcel},
+		{"MEETING LIST", weekly.ExportMeetingListToExcel},
 	}
 
 	for _, sheet := range sheets {
