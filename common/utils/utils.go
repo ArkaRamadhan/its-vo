@@ -342,13 +342,10 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
 
-	// Tentukan schema untuk tabel
-	tableName := fmt.Sprintf("%s.%s", schema, "files") // Format: schema.table_name
-
 	// Khusus untuk model File
 	if file, ok := model.(*models.File); ok {
 		// Ambil data file terlebih dahulu
-		if err := db.Table(tableName).First(file, id).Error; err != nil {
+		if err := db.Table(schema).First(file, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 			return
 		}
@@ -358,7 +355,6 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		// Hapus file fisik
 		if err := os.Remove(file.FilePath); err != nil {
 			if !os.IsNotExist(err) { // Abaikan error jika file memang sudah tidak ada
-				log.Printf("Gagal menghapus file fisik: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus file fisik: " + err.Error()})
 				return
 			}
@@ -374,38 +370,29 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		if err != nil {
 			log.Printf("Error membaca direktori %s: %v", dirPath, err)
 		} else {
-			log.Printf("Jumlah file dalam folder %s: %d", dirPath, len(entries))
-			for _, entry := range entries {
-				log.Printf("File tersisa: %s", entry.Name())
-			}
-
-			// Hapus folder jika kosong
-			if len(entries) == 0 {
+			if len(entries) == 0 { // Jika folder kosong, hapus
 				if err := os.Remove(dirPath); err != nil {
-					log.Printf("Gagal menghapus folder kosong %s: %v", dirPath, err)
+					log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
 				} else {
-					log.Printf("Berhasil menghapus folder: %s", dirPath)
+					log.Printf("Berhasil menghapus direktori: %s", dirPath)
 				}
 			} else {
-				// Paksa hapus folder dan seluruh isinya jika tidak kosong
-				if err := os.RemoveAll(dirPath); err != nil {
-					log.Printf("Gagal menghapus folder beserta isinya %s: %v", dirPath, err)
-					c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus folder: " + err.Error()})
-					return
+				log.Printf("Direktori tidak kosong, tidak dihapus: %s", dirPath)
+				for _, entry := range entries {
+					log.Printf("File tersisa: %s", entry.Name())
 				}
-				log.Printf("Berhasil menghapus folder beserta isinya: %s", dirPath)
 			}
 		}
 	} else {
 		// Untuk model lain, cek apakah data ada
-		if err := db.Table(tableName).First(model, id).Error; err != nil {
+		if err := db.Table(schema).First(model, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 			return
 		}
 	}
 
 	// Hapus record dari database
-	if err := db.Table(tableName).Delete(model).Error; err != nil {
+	if err := db.Table(schema).Delete(model).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus " + modelName + ": " + err.Error()})
 		return
 	}

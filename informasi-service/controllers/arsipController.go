@@ -188,11 +188,6 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus:    nil,
-		CustomStyles: &helper.CustomStyles{
-			DefaultCellStyle: &excelize.Style{
-				Border:    helper.BorderBlack,
-			},
-		},
 	}
 
 	if f != nil {
