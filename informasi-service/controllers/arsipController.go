@@ -188,6 +188,12 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus:    nil,
+		CustomStyles: &helper.CustomStyles{
+			DefaultCellStyle: &excelize.Style{
+				Border:    helper.BorderBlack,
+				Alignment: helper.WrapAlignment,
+			},
+		},
 	}
 
 	if f != nil {
@@ -207,105 +213,6 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 
 	return nil
 }
-
-// func ImportExcelArsip(c *gin.Context) {
-// 	// Mengambil file dari form upload
-// 	file, _, err := c.Request.FormFile("file")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-// 		return
-// 	}
-// 	defer file.Close()
-
-// 	// Simpan file sementara jika perlu
-// 	tempFile, err := os.CreateTemp("", "*.xlsx")
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-// 		return
-// 	}
-// 	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
-
-// 	// Salin file dari request ke file sementara
-// 	if _, err := file.Seek(0, 0); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
-// 		return
-// 	}
-// 	if _, err := io.Copy(tempFile, file); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-// 		return
-// 	}
-
-// 	// Buka file Excel dari file sementara
-// 	tempFile.Seek(0, 0) // Reset pointer ke awal file
-// 	f, err := excelize.OpenFile(tempFile.Name())
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-// 		return
-// 	}
-// 	defer f.Close()
-
-// 	// Pilih sheet
-// 	sheetName := "ARSIP"
-// 	rows, err := f.GetRows(sheetName)
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-// 		return
-// 	}
-
-// 	// Loop melalui baris dan simpan ke database
-// 	for i, row := range rows {
-// 		if i == 0 {
-// 			// Lewati header baris jika ada
-// 			continue
-// 		}
-// 		if len(row) < 4 {
-// 			// Pastikan ada cukup kolom
-// 			continue
-// 		}
-
-// 		noArsip := row[0]
-// 		jenisDokumen := row[1]
-// 		noDokumen := row[2]
-// 		perihal := row[3]
-// 		noBox := row[4]
-// 		keterangan := row[5]
-// 		tanggalDokumen := row[6]
-// 		tanggalPenyerahan := row[7]
-
-// 		// Parse tanggal
-// 		tanggalDokumenString, err := time.Parse("2006-01-02", tanggalDokumen)
-// 		if err != nil {
-// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-// 			return
-// 		}
-// 		tanggalPenyerahanString, err := time.Parse("2006-01-02", tanggalPenyerahan)
-// 		if err != nil {
-// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-// 			return
-// 		}
-
-// 		arsip := models.Arsip{
-// 			NoArsip:           &noArsip,
-// 			JenisDokumen:      &jenisDokumen,
-// 			NoDokumen:         &noDokumen,
-// 			Perihal:           &perihal,
-// 			NoBox:             &noBox,
-// 			Keterangan:        &keterangan,
-// 			TanggalDokumen:    &tanggalDokumenString,
-// 			TanggalPenyerahan: &tanggalPenyerahanString,
-// 			CreateBy:          c.MustGet("username").(string),
-// 		}
-
-// 		// Simpan ke database
-// 		if err := initializers.DB.Create(&arsip).Error; err != nil {
-// 			log.Printf("Error saving record from row %d: %v", i+1, err)
-// 			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
-// 			return
-// 		}
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport."})
-// }
 
 func ImportExcelArsip(c *gin.Context) {
 	config := helper.ExcelImportConfig{

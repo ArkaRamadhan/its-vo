@@ -14,7 +14,7 @@ func RequestIndex(c *gin.Context) {
 	var request []models.BookingRapat
 	// Tambahkan filter untuk tidak menampilkan event dengan status "pending"
 	if err := initializers.DB.Where("status = ?", "pending").Find(&request).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, request)

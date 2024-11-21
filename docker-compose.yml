@@ -19,12 +19,12 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      # - dokumen-service
+      - dokumen-service
       - informasi-service
       - kegiatan-service
       - user-service
-      # - weeklytimeline-service
-      # - project-service
+      - weeklytimeline-service
+      - project-service
     networks:
       - app-network
 

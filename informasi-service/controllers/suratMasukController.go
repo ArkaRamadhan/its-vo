@@ -180,6 +180,12 @@ func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string,
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus:    nil,
+		CustomStyles: &helper.CustomStyles{
+			DefaultCellStyle: &excelize.Style{
+				Border:    helper.BorderBlack,
+				Alignment: helper.WrapAlignment,
+			},
+		},
 	}
 
 	if f != nil {
@@ -207,129 +213,6 @@ func excelDateToTimeSuratMasuk(excelDate int) (time.Time, error) {
 	days := time.Duration(excelDate) * 24 * time.Hour
 	return baseDate.Add(days), nil
 }
-
-// func ImportExcelSuratMasuk(c *gin.Context) {
-// 	// Mengambil file dari form upload
-// 	file, _, err := c.Request.FormFile("file")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-// 		return
-// 	}
-// 	defer file.Close()
-
-// 	// Simpan file sementara jika perlu
-// 	tempFile, err := os.CreateTemp("", "*.xlsx")
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-// 		return
-// 	}
-// 	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
-
-// 	// Salin file dari request ke file sementara
-// 	if _, err := file.Seek(0, 0); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
-// 		return
-// 	}
-// 	if _, err := io.Copy(tempFile, file); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-// 		return
-// 	}
-
-// 	// Buka file Excel dari file sementara
-// 	tempFile.Seek(0, 0) // Reset pointer ke awal file
-// 	f, err := excelize.OpenFile(tempFile.Name())
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-// 		return
-// 	}
-// 	defer f.Close()
-
-// 	// Pilih sheet
-// 	sheetName := "SURAT MASUK"
-// 	rows, err := f.GetRows(sheetName)
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-// 		return
-// 	}
-
-// 	log.Println("Processing rows...") // Log untuk memulai proses baris
-
-// 	// Definisikan semua format tanggal yang mungkin
-// 	dateFormats := []string{
-// 		"2 January 2006",
-// 		"02-Jan-06",
-// 		"2006-01-02",
-// 		"02-01-2006",
-// 		"01/02/2006",
-// 		"2006.01.02",
-// 		"02/01/2006",
-// 		"Jan 2, 06",
-// 		"Jan 2, 2006",
-// 		"01/02/06",
-// 		"02/01/06",
-// 		"06/02/01",
-// 		"06/01/02",
-// 		"06-Jan-02",
-// 		"02-Jan-06",
-// 		"1-Jan-06",
-// 		"06-Jan-02",
-// 	}
-
-// 	// Loop melalui baris dan simpan ke database
-// 	for i, row := range rows {
-// 		if i == 0 { // Lewati baris pertama yang merupakan header
-// 			continue
-// 		}
-// 		if len(row) < 5 { // Pastikan ada cukup kolom
-// 			log.Printf("Row %d skipped: less than 5 columns filled", i+1)
-// 			continue
-// 		}
-// 		noSurat := row[0]
-// 		title := row[1]
-// 		related_div := row[2]
-// 		destiny_div := row[3]
-// 		tanggalString := row[4]
-
-// 		var tanggal time.Time
-// 		var parseErr error
-
-// 		// Coba konversi dari serial Excel jika tanggalString adalah angka
-// 		if serial, err := strconv.Atoi(tanggalString); err == nil {
-// 			tanggal, parseErr = excelDateToTimeSuratMasuk(serial)
-// 		} else {
-// 			// Coba parse menggunakan format tanggal yang sudah ada
-// 			for _, format := range dateFormats {
-// 				tanggal, parseErr = time.Parse(format, tanggalString)
-// 				if parseErr == nil {
-// 					break // Keluar dari loop jika parsing berhasil
-// 				}
-// 			}
-// 		}
-
-// 		if parseErr != nil {
-// 			log.Printf("Format tanggal tidak valid di baris %d: %v", i+1, parseErr)
-// 			continue // Lewati baris ini jika format tanggal tidak valid
-// 		}
-
-// 		surat_masuk := models.SuratMasuk{
-// 			NoSurat:    &noSurat,
-// 			Title:      &title,
-// 			RelatedDiv: &related_div,
-// 			DestinyDiv: &destiny_div,
-// 			Tanggal:    &tanggal,
-// 			CreateBy:   c.MustGet("username").(string),
-// 		}
-
-// 		// Simpan ke database
-// 		if err := initializers.DB.Create(&surat_masuk).Error; err != nil {
-// 			log.Printf("Error saving record from row %d: %v", i+1, err)
-// 			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
-// 			return
-// 		}
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport"})
-// }
 
 func ImportExcelSuratMasuk(c *gin.Context) {
 	config := helper.ExcelImportConfig{

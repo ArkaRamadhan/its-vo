@@ -92,7 +92,7 @@ func MeetingCreate(c *gin.Context) {
 
 	if result.Error != nil {
 		c.Status(400)
-		c.JSON(400, gin.H{"error": "Failed to create Meeting: " + result.Error.Error()})
+		c.JSON(400, gin.H{"message": "Failed to create Meeting: " + result.Error.Error()})
 		return
 	}
 
@@ -273,102 +273,6 @@ func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 
 	return nil
 }
-
-// func ImportExcelMeeting(c *gin.Context) {
-// 	// Mengambil file dari form upload
-// 	file, _, err := c.Request.FormFile("file")
-// 	if err != nil {
-// 		c.String(http.StatusBadRequest, "Error retrieving the file: %v", err)
-// 		return
-// 	}
-// 	defer file.Close()
-
-// 	// Simpan file sementara jika perlu
-// 	tempFile, err := os.CreateTemp("", "*.xlsx")
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error creating temporary file: %v", err)
-// 		return
-// 	}
-// 	defer os.Remove(tempFile.Name()) // Hapus file sementara setelah selesai
-
-// 	// Salin file dari request ke file sementara
-// 	if _, err := file.Seek(0, 0); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error seeking file: %v", err)
-// 		return
-// 	}
-// 	if _, err := io.Copy(tempFile, file); err != nil {
-// 		c.String(http.StatusInternalServerError, "Error copying file: %v", err)
-// 		return
-// 	}
-
-// 	// Buka file Excel dari file sementara
-// 	tempFile.Seek(0, 0) // Reset pointer ke awal file
-// 	f, err := excelize.OpenFile(tempFile.Name())
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error opening file: %v", err)
-// 		return
-// 	}
-// 	defer f.Close()
-
-// 	// Pilih sheet
-// 	sheetName := "MEETING"
-// 	rows, err := f.GetRows(sheetName)
-// 	if err != nil {
-// 		c.String(http.StatusInternalServerError, "Error getting rows: %v", err)
-// 		return
-// 	}
-
-// 	// Loop melalui baris dan simpan ke database
-// 	for i, row := range rows {
-// 		if i == 0 {
-// 			// Lewati header baris jika ada
-// 			continue
-// 		}
-// 		if len(row) < 7 {
-// 			// Pastikan ada cukup kolom
-// 			continue
-// 		}
-// 		task := row[0]
-// 		tindakLanjut := row[1]
-// 		status := row[2]
-// 		updatePengerjaan := row[3]
-// 		pic := row[4]
-// 		tanggalTargetString := row[5]
-// 		tanggalActualString := row[6]
-
-// 		// Parse tanggal
-// 		tanggalTarget, err := time.Parse("2006-01-02", tanggalTargetString)
-// 		if err != nil {
-// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-// 			return
-// 		}
-// 		tanggalActual, err := time.Parse("2006-01-02", tanggalActualString)
-// 		if err != nil {
-// 			c.String(http.StatusBadRequest, "Invalid date format in row %d: %v", i+1, err)
-// 			return
-// 		}
-
-// 		meeting := models.Meeting{
-// 			Task:             &task,
-// 			TindakLanjut:     &tindakLanjut,
-// 			Status:           &status,
-// 			UpdatePengerjaan: &updatePengerjaan,
-// 			Pic:              &pic,
-// 			TanggalTarget:    &tanggalTarget,
-// 			TanggalActual:    &tanggalActual,
-// 			CreateBy:         c.MustGet("username").(string),
-// 		}
-
-// 		// Simpan ke database
-// 		if err := initializers.DB.Create(&meeting).Error; err != nil {
-// 			log.Printf("Error saving record from row %d: %v", i+1, err)
-// 			c.String(http.StatusInternalServerError, "Error saving record from row %d: %v", i+1, err)
-// 			return
-// 		}
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Data berhasil diimport."})
-// }
 
 func ImportExcelMeeting(c *gin.Context) {
 	config := helper.ExcelImportConfig{

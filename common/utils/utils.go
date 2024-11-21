@@ -430,7 +430,7 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		// Hapus file fisik
 		if err := os.Remove(file.FilePath); err != nil {
 			if !os.IsNotExist(err) { // Abaikan error jika file memang sudah tidak ada
-				c.JSON(http.StatusInternalServerError, gin.H{"message": "gagal menghapus file fisik: " + err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus file fisik: " + err.Error()})
 				return
 			}
 			log.Printf("File sudah tidak ada: %s", file.FilePath)
@@ -440,14 +440,12 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		dirPath := filepath.Dir(file.FilePath) // Mendapatkan path folder ID
 		log.Printf("Mencoba menghapus direktori: %s", dirPath)
 
-		// Baca isi direktori
+		// Validasi jika folder kosong
 		entries, err := os.ReadDir(dirPath)
 		if err != nil {
 			log.Printf("Error membaca direktori %s: %v", dirPath, err)
 		} else {
-			log.Printf("Jumlah file dalam direktori: %d", len(entries))
-			if len(entries) == 0 {
-				// Hapus direktori jika kosong
+			if len(entries) == 0 { // Jika folder kosong, hapus
 				if err := os.Remove(dirPath); err != nil {
 					log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
 				} else {
@@ -455,7 +453,6 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 				}
 			} else {
 				log.Printf("Direktori tidak kosong, tidak dihapus: %s", dirPath)
-				// Optional: print isi direktori untuk debug
 				for _, entry := range entries {
 					log.Printf("File tersisa: %s", entry.Name())
 				}
@@ -471,12 +468,13 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 
 	// Hapus record dari database
 	if err := db.Table(schema).Delete(model).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "gagal menghapus " + modelName + ": " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus " + modelName + ": " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": modelName + " berhasil dihapus"})
 }
+
 
 // ********** END OF COMPONENT CRUD ********** //
 

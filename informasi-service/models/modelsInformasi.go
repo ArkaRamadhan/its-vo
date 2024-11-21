@@ -83,12 +83,24 @@ type SuratKeluar struct {
 
 func (i *SuratKeluar) MarshalJSON() ([]byte, error) {
 	type Alias SuratKeluar
+	if i.Tanggal == nil {
+		// Handle jika Tanggal nil
+		return json.Marshal(&struct {
+			Tanggal string `json:"tanggal"`
+			*Alias
+		}{
+			Tanggal: "", // Atau format default yang diinginkan
+			Alias:   (*Alias)(i),
+		})
+	}
+	
+	// Jika Tanggal tidak nil
 	tanggalFormatted := i.Tanggal.Format("2006-01-02")
 	return json.Marshal(&struct {
-		Tanggal *string `json:"tanggal"`
+		Tanggal string `json:"tanggal"`
 		*Alias
 	}{
-		Tanggal: &tanggalFormatted,
+		Tanggal: tanggalFormatted,
 		Alias:   (*Alias)(i),
 	})
 }

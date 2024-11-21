@@ -167,7 +167,7 @@ func ProjectUpdate(c *gin.Context) {
 	var requestBody ProjectRequest
 
 	if err := c.BindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
 		return
 	}
 

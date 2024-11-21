@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=mod -o weeklyTimeline-service .
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o weeklyTimeline-service .
 
 FROM alpine:latest
 

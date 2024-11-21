@@ -42,6 +42,11 @@ func main() {
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("mysession", store))
 
+	r.GET("/user", controllers.UserIndex)
+	r.POST("/user", controllers.Register)
+	r.DELETE("/user/:id", controllers.UserDelete)
+	r.PUT("/user/:id", controllers.UserUpdate)
+
 	r.POST("/logout", controllers.Logout)
 
 	r.Run(":8084")

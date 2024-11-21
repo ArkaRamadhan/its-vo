@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/arkaramadhan/its-vo/common/initializers"
-	"github.com/arkaramadhan/its-vo/common/utils"
 	helper "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/kegiatan-service/models"
 	"github.com/gin-gonic/gin"
@@ -17,7 +16,7 @@ import (
 func GetEventsCuti(c *gin.Context) {
 	var events []models.JadwalCuti
 	if err := initializers.DB.Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, events)
@@ -27,7 +26,7 @@ func GetEventsCuti(c *gin.Context) {
 func CreateEventCuti(c *gin.Context) {
 	var event models.JadwalCuti
 	if err := c.ShouldBindJSON(&event); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -52,10 +51,10 @@ func CreateEventCuti(c *gin.Context) {
 		return
 	}
 
-	utils.SetNotification(event.Title, startTime, "JadwalCuti") // Panggil fungsi SetNotification
+	helper.SetNotification(event.Title, startTime, "JadwalCuti") // Panggil fungsi SetNotification
 	if err := initializers.DB.Create(&event).Error; err != nil {
 		log.Printf("Error creating event: %v", err) // Add this line
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, event)
@@ -64,11 +63,11 @@ func CreateEventCuti(c *gin.Context) {
 func DeleteEventCuti(c *gin.Context) {
 	id := c.Param("id") // Menggunakan c.Param jika UUID dikirim sebagai bagian dari URL
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID harus disertakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan"})
 		return
 	}
 	if err := initializers.DB.Where("id = ?", id).Delete(&models.JadwalCuti{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -82,7 +81,7 @@ func ExportJadwalCutiHandler(c *gin.Context) {
 func ExportJadwalCutiToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalCuti
 	if err := initializers.DB.Table("kegiatan.jadwal_cutis").Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return err
 	}
 

@@ -17,7 +17,7 @@ func GetEventsBookingRapat(c *gin.Context) {
 	var events []models.BookingRapat
 	// Tambahkan filter untuk tidak menampilkan event dengan status "pending"
 	if err := initializers.DB.Where("status != ?", "pending").Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, events)
@@ -27,14 +27,14 @@ func GetEventsBookingRapat(c *gin.Context) {
 func CreateEventBookingRapat(c *gin.Context) {
 	var event models.BookingRapat
 	if err := c.ShouldBindJSON(&event); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	// Simpan event ke database terlebih dahulu
 	if err := initializers.DB.Create(&event).Error; err != nil {
 		log.Printf("Error creating event: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -66,7 +66,7 @@ func CreateEventBookingRapat(c *gin.Context) {
 	// Cek bentrok, kecualikan event yang sedang dibuat
 	var conflictingEvents []models.BookingRapat
 	if err := initializers.DB.Where("id != ? AND start < ? AND \"end\" > ?", event.ID, event.End, event.Start).Find(&conflictingEvents).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -86,7 +86,7 @@ func CreateEventBookingRapat(c *gin.Context) {
 	// Update status event di database
 	if err := initializers.DB.Save(&event).Error; err != nil {
 		log.Printf("Error updating event status: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -96,11 +96,11 @@ func CreateEventBookingRapat(c *gin.Context) {
 func DeleteEventBookingRapat(c *gin.Context) {
 	id := c.Param("id") // Menggunakan c.Param jika UUID dikirim sebagai bagian dari URL
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID harus disertakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan"})
 		return
 	}
 	if err := initializers.DB.Where("id = ?", id).Delete(&models.BookingRapat{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -114,7 +114,7 @@ func ExportBookingRapatHandler(c *gin.Context) {
 func ExportBookingRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.BookingRapat
 	if err := initializers.DB.Table("kegiatan.booking_rapats").Where("status = ?", "acc").Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return err
 	}
 

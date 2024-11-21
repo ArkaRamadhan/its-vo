@@ -4,19 +4,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/arkaramadhan/its-vo/common/initializers"
-	helper "github.com/arkaramadhan/its-vo/common/utils"
+	"github.com/arkaramadhan/its-vo/user-serviceinitializers"
 	"github.com/arkaramadhan/its-vo/user-service/models"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type requestUser struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Info     string `json:"info"`
+	Username string json:"username"
+	Email    string json:"email"
+	Password string json:"password" validate:"min=3,max=8" // Menambahkan validasi password
+	Info     string json:"info"
 }
 
 func Login(c *gin.Context) {
@@ -69,7 +69,8 @@ func Login(c *gin.Context) {
 	// Tambahkan informasi pengguna dalam response
 	c.JSON(http.StatusOK, gin.H{
 		"user": gin.H{
-			"token": token,
+			"username": foundUser.Username,
+			"email":    foundUser.Email,
 		},
 	})
 }
@@ -92,29 +93,73 @@ func GenerateJWT(foundUser models.User) (string, error) {
 	return tokenString, nil
 }
 
-func AddUser(c *gin.Context) {
+func Register(c *gin.Context) {
 	var newUser models.User
+	var errorMessages = make(map[string]string)
 
 	if err := c.BindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Data tidak valid"})
 		return
 	}
 
+	// Pengecekan username yang sudah ada
+	var existingUser models.User
+	resultUsername := initializers.DB.Where("username = ?", newUser.Username).First(&existingUser)
+	if resultUsername.Error == nil && resultUsername.RowsAffected > 0 {
+		errorMessages["username"] = "Username sudah digunakan"
+	}
+
+	// Pengecekan email yang sudah ada
+	resultEmail := initializers.DB.Where("email = ?", newUser.Email).First(&existingUser)
+	if resultEmail.Error == nil && resultEmail.RowsAffected > 0 {
+		errorMessages["email"] = "Email sudah digunakan"
+	}
+
+	// Validasi password dan lainnya menggunakan validator
+	validate := validator.New()
+	err := validate.Struct(newUser)
+	if err != nil {
+		if _, ok := err.(*validator.InvalidValidationError); ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			return
+		}
+
+		for _, err := range err.(validator.ValidationErrors) {
+			field := err.Field()
+			tag := err.Tag()
+			switch tag {
+			case "min":
+				errorMessages[field] = field + " harus lebih dari " + err.Param() + " huruf"
+			case "max":
+				errorMessages[field] = field + " harus kurang dari " + err.Param() + " huruf"
+			default:
+				errorMessages[field] = "Validasi untuk " + field + " gagal"
+			}
+		}
+	}
+
+	// Jika ada error dari username, email, atau validasi lainnya, kirim semua error
+	if len(errorMessages) > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errorMessages})
+		return
+	}
+
+	// Proses pembuatan password yang di-hash
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengenkripsi kata sandi"})
 		return
 	}
-
 	newUser.Password = string(hashedPassword)
 
+	// Mencoba membuat user baru di database
 	result := initializers.DB.Create(&newUser)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "detail": result.Error.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat pengguna"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Pengguna berhasil dibuat"})
 }
 
 func GetUserToken(userID uint) (string, error) {
@@ -151,8 +196,15 @@ func Logout(c *gin.Context) {
 }
 
 func UserIndex(c *gin.Context) {
+
+	// Get models from DB
 	var users []models.User
-	helper.FetchAllRecords(initializers.DB, c, &users, "user.users", "Gagal mengambil data user")
+	initializers.DB.Find(&users)
+
+	//Respond with them
+	c.JSON(200, gin.H{
+		"users": users,
+	})
 }
 
 func UserUpdate(c *gin.Context) {
@@ -160,18 +212,15 @@ func UserUpdate(c *gin.Context) {
 	var requestBody requestUser
 
 	if err := c.BindJSON(&requestBody); err != nil {
-		c.Status(400)
-		c.Error(err) // log the error
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Data tidak valid"})
 		return
 	}
 
 	id := c.Params.ByName("id")
 
 	var users models.User
-	initializers.DB.First(&users, id)
-
 	if err := initializers.DB.First(&users, id).Error; err != nil {
-		c.JSON(404, gin.H{"error": "user tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
 		return
 	}
 
@@ -186,21 +235,48 @@ func UserUpdate(c *gin.Context) {
 	} else {
 		users.Email = users.Email // gunakan nilai yang ada dari database
 	}
+
 	if requestBody.Password != "" {
-		users.Password = requestBody.Password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(requestBody.Password), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengenkripsi kata sandi"})
+			return
+		}
+		users.Password = string(hashedPassword)
 	} else {
 		users.Password = users.Password // gunakan nilai yang ada dari database
 	}
 
-	initializers.DB.Model(&users).Updates(users)
+	if err := initializers.DB.Model(&users).Updates(users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui pengguna"})
+		return
+	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"users": users,
 	})
-
 }
 
 func UserDelete(c *gin.Context) {
-	var user models.User
-	helper.DeleteRecordByID(c, initializers.DB, "user.users", &user, "user")
+
+	//get id
+	id := c.Params.ByName("id")
+
+	// find the user
+	var users models.User
+
+	if err := initializers.DB.First(&users, id).Error; err != nil {
+		c.JSON(404, gin.H{"error": "users not found"})
+		return
+	}
+
+	/// delete it
+	if err := initializers.DB.Delete(&users).Error; err != nil {
+		c.JSON(404, gin.H{"error": "users Failed to Delete"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"users": "users deleted",
+	})
 }

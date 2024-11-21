@@ -16,7 +16,7 @@ import (
 func GetEventsRapat(c *gin.Context) {
 	var events []models.JadwalRapat
 	if err := initializers.DB.Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, events)
@@ -25,7 +25,7 @@ func GetEventsRapat(c *gin.Context) {
 func CreateEventRapat(c *gin.Context) {
 	var event models.JadwalRapat
 	if err := c.ShouldBindJSON(&event); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -54,7 +54,7 @@ func CreateEventRapat(c *gin.Context) {
 
 	if err := initializers.DB.Create(&event).Error; err != nil {
 		log.Printf("Error creating event: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, event)
@@ -63,11 +63,11 @@ func CreateEventRapat(c *gin.Context) {
 func DeleteEventRapat(c *gin.Context) {
 	id := c.Param("id") // Menggunakan c.Param jika UUID dikirim sebagai bagian dari URL
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ID harus disertakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan"})
 		return
 	}
 	if err := initializers.DB.Where("id = ?", id).Delete(&models.JadwalRapat{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -81,7 +81,7 @@ func ExportJadwalRapatHandler(c *gin.Context) {
 func ExportJadwalRapatToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events []models.JadwalRapat
 	if err := initializers.DB.Table("kegiatan.jadwal_rapats").Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return err
 	}
 

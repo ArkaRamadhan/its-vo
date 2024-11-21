@@ -7,6 +7,7 @@ import (
 	"github.com/arkaramadhan/its-vo/common/initializers"
 	"github.com/arkaramadhan/its-vo/common/middleware"
 	exportAll "github.com/arkaramadhan/its-vo/common/exportAll"
+	utils "github.com/arkaramadhan/its-vo/common/utils"
 	"github.com/arkaramadhan/its-vo/weeklyTimeline-service/controllers"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -62,6 +63,9 @@ func main() {
 	r.POST("/resourceProject", controllers.CreateResourceProject)
 	r.DELETE("/resourceProject/:id", controllers.DeleteResourceProject)
 	r.GET("/exportTimelineProject", controllers.ExportTimelineProjectHandler)
+
+	r.GET("/notifications", utils.GetNotifications)
+	r.DELETE("/notifications/:id", utils.DeleteNotification)
 
 	r.GET("/exportAll", exportAll.ExportAll)
 

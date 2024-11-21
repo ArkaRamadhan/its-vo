@@ -17,7 +17,7 @@ import (
 func GetEventsDesktop(c *gin.Context) {
 	var events []models.TimelineDesktop
 	if err := initializers.DB.Find(&events).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, events)
@@ -27,20 +27,20 @@ func GetEventsDesktop(c *gin.Context) {
 func CreateEventDesktop(c *gin.Context) {
 	var event models.TimelineDesktop
 	if err := c.ShouldBindJSON(&event); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	var resource models.ResourceDesktop
 	if err := initializers.DB.Table("kegiatan.resource_desktops").First(&resource, event.ResourceId).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	// Parsing waktu untuk notifikasi
 	loc, err := time.LoadLocation("Asia/Jakarta")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error loading location"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error loading location"})
 		return
 	}
 
@@ -56,7 +56,7 @@ func CreateEventDesktop(c *gin.Context) {
 	helper.SetNotification(event.Title, startTime, "TimelineWallpaperDesktop")
 
 	if err := initializers.DB.Create(&event).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, event)
@@ -89,7 +89,7 @@ func DeleteEventDesktop(c *gin.Context) {
 func GetResourcesDesktop(c *gin.Context) {
 	var resources []models.ResourceDesktop
 	if err := initializers.DB.Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, resources)
@@ -99,12 +99,12 @@ func GetResourcesDesktop(c *gin.Context) {
 func CreateResourceDesktop(c *gin.Context) {
 	var resource models.ResourceDesktop
 	if err := c.ShouldBindJSON(&resource); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	if err := initializers.DB.Create(&resource).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, resource)
@@ -114,7 +114,7 @@ func CreateResourceDesktop(c *gin.Context) {
 func DeleteResourceDesktop(c *gin.Context) {
 	id := c.Param("id")
 	if err := initializers.DB.Where("id = ?", id).Delete(&models.ResourceDesktop{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -128,13 +128,13 @@ func ExportTimelineDesktopHandler(c *gin.Context) {
 func ExportTimelineDesktopToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events_timeline []models.TimelineDesktop
 	if err := initializers.DB.Table("kegiatan.timeline_desktops").Find(&events_timeline).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return err
 	}
 
 	var resources []models.ResourceDesktop
 	if err := initializers.DB.Table("kegiatan.resource_desktops").Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return err
 	}
 
