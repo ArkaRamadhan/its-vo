@@ -342,58 +342,13 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
 
-	// Khusus untuk model File
-	if file, ok := model.(*models.File); ok {
-		// Ambil data file terlebih dahulu
-		if err := db.Table("common.files").First(file, id).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
-			return
-		}
-
-		log.Printf("Mencoba menghapus file: %s", file.FilePath)
-
-		// Hapus file fisik
-		if err := os.Remove(file.FilePath); err != nil {
-			if !os.IsNotExist(err) { // Abaikan error jika file memang sudah tidak ada
-				c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus file fisik: " + err.Error()})
-				return
-			}
-			log.Printf("File sudah tidak ada: %s", file.FilePath)
-		}
-
-		// Hapus folder ID
-		dirPath := filepath.Dir(file.FilePath) // Mendapatkan path folder ID
-		log.Printf("Mencoba menghapus direktori: %s", dirPath)
-
-		// Validasi jika folder kosong
-		entries, err := os.ReadDir(dirPath)
-		if err != nil {
-			log.Printf("Error membaca direktori %s: %v", dirPath, err)
-		} else {
-			if len(entries) == 0 { // Jika folder kosong, hapus
-				if err := os.Remove(dirPath); err != nil {
-					log.Printf("Gagal menghapus direktori kosong %s: %v", dirPath, err)
-				} else {
-					log.Printf("Berhasil menghapus direktori: %s", dirPath)
-				}
-			} else {
-				log.Printf("Direktori tidak kosong, tidak dihapus: %s", dirPath)
-				for _, entry := range entries {
-					log.Printf("File tersisa: %s", entry.Name())
-				}
-			}
-		}
-	} else {
-		// Untuk model lain, cek apakah data ada
-		if err := db.Table(schema).First(model, id).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
-			return
-		}
+	if err := db.Table(schema).First(model, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
+		return
 	}
 
-	// Hapus record dari database
 	if err := db.Table(schema).Delete(model).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus " + modelName + ": " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "gagal menghapus " + modelName + ": " + err.Error()})
 		return
 	}
 
