@@ -374,39 +374,48 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		log.Printf("Error getting files: %v", err)
 	}
 
-	baseDir := filepath.Join("C:", "UploadedFile", modelName, id)
-
-	// Tambahkan logging untuk debug
+	// Gunakan UPLOAD_DIR dari environment variable
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		log.Printf("Warning: UPLOAD_DIR tidak diatur, menggunakan path default")
+		uploadDir = "/app/UploadedFile"
+	}
+	
+	baseDir := filepath.Join(uploadDir, modelName, id)
 	log.Printf("Mencoba menghapus direktori: %s", baseDir)
 
 	if _, err := os.Stat(baseDir); !os.IsNotExist(err) {
-		// Hapus file dari database
+		// Hapus file dari database terlebih dahulu
 		if err := initializers.DB.Table("common.files").Where("user_id = ?", id).Delete(&models.File{}).Error; err != nil {
 			log.Printf("Error saat menghapus record file dari database: %v", err)
 		}
 
-		// Coba hapus file satu per satu dulu
+		// Hapus file satu per satu
 		entries, err := os.ReadDir(baseDir)
 		if err != nil {
-			log.Printf("Error membaca direktori: %v", err)
+			log.Printf("Error membaca direktori %s: %v", baseDir, err)
 		} else {
 			for _, entry := range entries {
 				fullPath := filepath.Join(baseDir, entry.Name())
 				if err := os.Remove(fullPath); err != nil {
 					log.Printf("Error menghapus file %s: %v", fullPath, err)
+				} else {
+					log.Printf("Berhasil menghapus file: %s", fullPath)
 				}
 			}
 		}
 
-		// Setelah itu baru hapus direktori
+		// Hapus direktori setelah semua file dihapus
 		if err := os.RemoveAll(baseDir); err != nil {
-			log.Printf("Error saat menghapus direktori: %v", err)
+			log.Printf("Error saat menghapus direktori %s: %v", baseDir, err)
 		} else {
 			log.Printf("Berhasil menghapus direktori: %s", baseDir)
 		}
+	} else {
+		log.Printf("Direktori tidak ditemukan atau sudah dihapus: %s", baseDir)
 	}
 
-	// Lanjutkan dengan penghapusan record dari database
+	// Hapus record dari database utama
 	if err := db.Table(schema).First(model, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 		return
@@ -417,7 +426,14 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": modelName + " berhasil dihapus"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": modelName + " berhasil dihapus",
+		"details": map[string]interface{}{
+			"directory_path": baseDir,
+			"model_name": modelName,
+			"id": id,
+		},
+	})
 }
 
 // ********** END OF COMPONENT CRUD ********** //
