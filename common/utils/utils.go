@@ -376,20 +376,37 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 
 	baseDir := filepath.Join("C:", "UploadedFile", modelName, id)
 
-    if _, err := os.Stat(baseDir); !os.IsNotExist(err) {
-        // Hapus file dari database
-        if err := initializers.DB.Table("common.files").Where("user_id = ?", id).Delete(&models.File{}).Error; err != nil {
-            log.Printf("Error saat menghapus record file dari database: %v", err)
-        }
+	// Tambahkan logging untuk debug
+	log.Printf("Mencoba menghapus direktori: %s", baseDir)
 
-        // Hapus direktori dan semua isinya
-        if err := os.RemoveAll(baseDir); err != nil {
-            log.Printf("Error saat menghapus direktori: %v", err)
-        } else {
-            log.Printf("Berhasil menghapus direktori: %s", baseDir)
+	if _, err := os.Stat(baseDir); !os.IsNotExist(err) {
+		// Hapus file dari database
+		if err := initializers.DB.Table("common.files").Where("user_id = ?", id).Delete(&models.File{}).Error; err != nil {
+			log.Printf("Error saat menghapus record file dari database: %v", err)
+		}
+
+		// Coba hapus file satu per satu dulu
+		entries, err := os.ReadDir(baseDir)
+		if err != nil {
+			log.Printf("Error membaca direktori: %v", err)
+		} else {
+			for _, entry := range entries {
+				fullPath := filepath.Join(baseDir, entry.Name())
+				if err := os.Remove(fullPath); err != nil {
+					log.Printf("Error menghapus file %s: %v", fullPath, err)
+				}
+			}
+		}
+
+		// Setelah itu baru hapus direktori
+		if err := os.RemoveAll(baseDir); err != nil {
+			log.Printf("Error saat menghapus direktori: %v", err)
+		} else {
+			log.Printf("Berhasil menghapus direktori: %s", baseDir)
 		}
 	}
 
+	// Lanjutkan dengan penghapusan record dari database
 	if err := db.Table(schema).First(model, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 		return
