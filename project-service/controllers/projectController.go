@@ -217,7 +217,7 @@ func ProjectUpdate(c *gin.Context) {
 	project.KodeProject = &newKodeProject
 
 	if requestBody.Bulan != nil && *requestBody.Bulan != "" {
-		parsedBulan, err := time.Parse("2006-01-02", *requestBody.Bulan)
+		parsedBulan, err := time.Parse("2006-01", *requestBody.Bulan)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid format bulan: " + err.Error()})
 			return
@@ -347,7 +347,7 @@ func ExportProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 	}
 
 	if isStandAlone {
-		fileName := "its_report_beritaAcara.xlsx"
+		fileName := "its_report_project.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {

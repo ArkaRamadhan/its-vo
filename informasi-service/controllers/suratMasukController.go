@@ -180,6 +180,16 @@ func ExportSuratMasukToExcel(c *gin.Context, f *excelize.File, sheetName string,
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus:    nil,
+		CustomStyles: &helper.CustomStyles{
+			DefaultCellStyle: &excelize.Style{
+				Alignment: helper.WrapAlignment,
+				Border:    helper.BorderBlack,
+			},
+			DataAreaStyle: &excelize.Style{
+				Alignment: helper.WrapAlignment,
+				Border:    helper.BorderBlack,
+			},
+		},
 	}
 
 	if f != nil {

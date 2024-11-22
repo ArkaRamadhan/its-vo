@@ -35,7 +35,7 @@ func CreateEventProject(c *gin.Context) {
 	}
 
 	// Ubah format parsing sesuai dengan format yang diterima
-	startTime, err := time.ParseInLocation("2006-01-02", event.Start, loc) // Ubah format di sini
+	startTime, err := time.ParseInLocation("2006-01-02 15:04:05", event.Start, loc) // Ubah format di sini
 	if err != nil {
 		log.Printf("Error parsing start time: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Error parsing start time"})
@@ -56,19 +56,19 @@ func CreateEventProject(c *gin.Context) {
 func DeleteEventProject(c *gin.Context) {
 	idParam := c.Param("id")
 	if idParam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan"})
+		c.JSON(http.StatusBadRequest, gin.H{"messag": "ID harus disertakan"})
 		return
 	}
 
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "ID tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"messag": "ID tidak valid"})
 		return
 	}
 
 	// Pastikan ID dikonversi ke tipe data yang sesuai
 	if err := initializers.DB.Where("id = ?", uint(id)).Delete(&models.TimelineProject{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -80,7 +80,7 @@ func DeleteEventProject(c *gin.Context) {
 func GetResourcesProject(c *gin.Context) {
 	var resources []models.ResourceProject
 	if err := initializers.DB.Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return
 	}
 
@@ -92,12 +92,12 @@ func GetResourcesProject(c *gin.Context) {
 func CreateResourceProject(c *gin.Context) {
 	var resource models.ResourceProject
 	if err := c.ShouldBindJSON(&resource); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"messag": err.Error()})
 		return
 	}
 
 	if err := initializers.DB.Create(&resource).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, resource)
@@ -107,13 +107,13 @@ func CreateResourceProject(c *gin.Context) {
 func DeleteResourceProject(c *gin.Context) {
 	idParam := c.Param("id")
 	if idParam == "" || idParam == "undefined" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "ID harus disertakan dan valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"messag": "ID harus disertakan dan valid"})
 		return
 	}
 
 	id, err := strconv.ParseUint(idParam, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "ID tidak valid"})
+		c.JSON(http.StatusBadRequest, gin.H{"messag": "ID tidak valid"})
 		return
 	}
 
@@ -121,7 +121,7 @@ func DeleteResourceProject(c *gin.Context) {
 
 	if err := initializers.DB.Where("id = ?", uint(id)).Delete(&models.ResourceProject{}).Error; err != nil {
 		log.Printf("Error deleting ResourceProject with ID: %d, error: %v", id, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return
 	}
 
@@ -138,13 +138,13 @@ func ExportTimelineProjectHandler(c *gin.Context) {
 func ExportTimelineProjectToExcel(c *gin.Context, f *excelize.File, sheetName string, isStandAlone bool) error {
 	var events_timeline []models.TimelineProject
 	if err := initializers.DB.Table("weekly_timeline.timeline_projects").Find(&events_timeline).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return err
 	}
 
 	var resources []models.ResourceProject
 	if err := initializers.DB.Table("weekly_timeline.resource_projects").Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"messag": err.Error()})
 		return err
 	}
 

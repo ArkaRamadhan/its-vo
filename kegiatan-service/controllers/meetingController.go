@@ -263,7 +263,7 @@ func ExportMeetingToExcel(c *gin.Context, f *excelize.File, sheetName string, is
 	}
 
 	if isStandAlone {
-		fileName := "its_report_suratkeluar.xlsx"
+		fileName := "its_report_meeting.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {

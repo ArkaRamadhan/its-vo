@@ -56,6 +56,7 @@ type CustomStyles struct {
 	SeparatorStyle   *excelize.Style
 	SeparatorLabels  map[string]string
 	AnggaranStyle    *excelize.Style
+	DataAreaStyle    *excelize.Style
 }
 
 // ExcelColumn mendefinisikan struktur untuk setiap kolom Excel
@@ -215,6 +216,19 @@ func ExportSingleSheet(f *excelize.File, config ExcelConfig, styleHeader int) (*
 			}
 		}
 		row++
+	}
+
+	// Terapkan style untuk area data
+	if config.CustomStyles != nil && config.CustomStyles.DataAreaStyle != nil {
+		styleID, err := f.NewStyle(config.CustomStyles.DataAreaStyle)
+		if err != nil {
+			return nil, err
+		}
+
+		// Terapkan style ke seluruh area data
+		startCell := "A2"
+		endCell := fmt.Sprintf("%s%d", string(rune('A'+len(config.Columns)-1)), row-1)
+		f.SetCellStyle(config.SheetName, startCell, endCell, styleID)
 	}
 
 	return f, nil
@@ -811,4 +825,3 @@ func setMonthData(f *excelize.File, sheet, month string, rowOffset, colOffset in
 	}
 	return nil
 }
-

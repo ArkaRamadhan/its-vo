@@ -345,7 +345,7 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 	// Khusus untuk model File
 	if file, ok := model.(*models.File); ok {
 		// Ambil data file terlebih dahulu
-		if err := db.Table(schema).First(file, id).Error; err != nil {
+		if err := db.Table("common.files").First(file, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
 			return
 		}

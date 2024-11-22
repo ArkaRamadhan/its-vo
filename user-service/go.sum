@@ -1,5 +1,5 @@
-github.com/arkaramadhan/its-vo/common v0.0.0-20241121200247-0cb7aaacae73 h1:VHlDpUNgF+Ms8OitwAb9Kmjg7hdzTGapi3hORfn5Rbg=
-github.com/arkaramadhan/its-vo/common v0.0.0-20241121200247-0cb7aaacae73/go.mod h1:xdvE/mmwskG37jrVpau6Ai6bpGoAkPJFdfu4X07tfS0=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241121203830-476fe15c0b63 h1:AEhhNprAuBwoPMYr10jGZaVCDP7UO2q15WDfy/1lSdc=
+github.com/arkaramadhan/its-vo/common v0.0.0-20241121203830-476fe15c0b63/go.mod h1:BjK23iLegVAHR3FWu47tjd9ug0x/e9qHMibiolANDqU=
 github.com/bytedance/sonic v1.11.6 h1:oUp34TzMlL+OY1OUWxHqsdkgC/Zfc85zGqw9siXjrc0=
 github.com/bytedance/sonic v1.11.6/go.mod h1:LysEHSvpvDySVdC2f87zGWf6CIKJcAvqab1ZaiQtds4=
 github.com/bytedance/sonic/loader v0.1.1 h1:c+e5Pt1k/cy5wMveRDyk2X4B9hF4g7an8N3zCYjJFNM=

@@ -202,7 +202,7 @@ func ExportPerdinToExcel(c *gin.Context, f *excelize.File, sheetName string, isS
 	}
 
 	if isStandAlone {
-		fileName := "its_report_beritaAcara.xlsx"
+		fileName := "its_report_perdin.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {

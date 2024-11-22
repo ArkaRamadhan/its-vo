@@ -1,4 +1,21 @@
 services:
+  client:
+    build:
+      context: ../Client
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Client:/app
+      - /app/node_modules
+    restart: always
+    depends_on:
+      - dokumen-service
+      - informasi-service
+      - kegiatan-service
+      - weeklytimeline-service
+      - project-service
+
   db:
     image: postgres
     restart: always

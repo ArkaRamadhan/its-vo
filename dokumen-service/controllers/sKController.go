@@ -205,7 +205,7 @@ func ExportSkToExcel(c *gin.Context, f *excelize.File, sheetName string, isStand
 	}
 
 	if isStandAlone {
-		fileName := "its_report_beritaAcara.xlsx"
+		fileName := "its_report_sk.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {

@@ -188,6 +188,16 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 		Data:         excelData,
 		IsSplitSheet: false,
 		GetStatus:    nil,
+		CustomStyles: &helper.CustomStyles{
+			DefaultCellStyle: &excelize.Style{
+				Alignment: helper.WrapAlignment,
+				Border:    helper.BorderBlack,
+			},
+			DataAreaStyle: &excelize.Style{
+				Alignment: helper.WrapAlignment,
+				Border:    helper.BorderBlack,
+			},
+		},
 	}
 
 	if f != nil {
@@ -197,7 +207,7 @@ func ExportArsipToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 	}
 
 	if isStandAlone {
-		fileName := "its_report_beritaAcara.xlsx"
+		fileName := "its_report_arsip.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {

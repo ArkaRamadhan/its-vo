@@ -3,17 +3,17 @@ module github.com/arkaramadhan/its-vo/dokumen-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241121200247-0cb7aaacae73
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241121203830-476fe15c0b63
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
 )
 
 require (
-	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241121200247-0cb7aaacae73 // indirect
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241121200247-0cb7aaacae73 // indirect
-	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241121200247-0cb7aaacae73 // indirect
-	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121200247-0cb7aaacae73 // indirect
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241121203830-476fe15c0b63 // indirect
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241121203830-476fe15c0b63 // indirect
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241121203830-476fe15c0b63 // indirect
+	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241121203830-476fe15c0b63 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

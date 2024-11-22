@@ -210,7 +210,7 @@ func ExportSuratToExcel(c *gin.Context, f *excelize.File, sheetName string, isSt
 	}
 
 	if isStandAlone {
-		fileName := "its_report_beritaAcara.xlsx"
+		fileName := "its_report_surat.xlsx"
 		c.Header("Content-Disposition", "attachment; filename="+fileName)
 		c.Header("Content-Type", "application/octet-stream")
 		if err := f.Write(c.Writer); err != nil {
