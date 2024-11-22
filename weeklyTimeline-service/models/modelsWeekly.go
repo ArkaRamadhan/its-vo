@@ -93,8 +93,8 @@ func (mt *MeetingSchedule) ToExcelRow() []interface{} {
 		helper.GetValue(mt.Waktu),
 		helper.GetValue(mt.Selesai),
 		helper.GetValue(mt.Tempat),
-		helper.GetValue(mt.Pic),
 		helper.GetValue(mt.Status),
+		helper.GetValue(mt.Pic),
 	}
 }
 
