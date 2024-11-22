@@ -193,7 +193,6 @@ func ExportMeetingListToExcel(c *gin.Context, f *excelize.File, sheetName string
 	config := helper.ExcelConfig{
 		SheetName: sheetName,
 		Columns: []helper.ExcelColumn{
-			{Header: "HARI", Width: 20},
 			{Header: "TANGGAL", Width: 20},
 			{Header: "PERIHAL", Width: 20},
 			{Header: "WAKTU", Width: 20},

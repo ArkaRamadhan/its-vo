@@ -57,7 +57,7 @@ type MeetingSchedule struct {
 	ID        uint       `gorm:"primaryKey"`
 	CreatedAt *time.Time `gorm:"autoCreateTime"`
 	UpdatedAt *time.Time `gorm:"autoUpdateTime"`
-	Hari      *string    `json:"hari"`
+	Hari      *string    `json:"hari"` 
 	Tanggal   *time.Time `json:"tanggal"`
 	Perihal   *string    `json:"perihal"`
 	Waktu     *string    `json:"waktu"`

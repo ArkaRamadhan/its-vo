@@ -3,7 +3,7 @@ module github.com/arkaramadhan/its-vo/weeklyTimeline-service
 go 1.23.2
 
 require (
-	github.com/arkaramadhan/its-vo/common v0.0.0-20241122065919-170cca800661
+	github.com/arkaramadhan/its-vo/common v0.0.0-20241122082317-e9dd1015bf89
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
@@ -11,9 +11,9 @@ require (
 
 require (
 	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241122032625-f42a54ea18d8 // indirect
-	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241122065919-170cca800661 // indirect
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241122065919-170cca800661 // indirect
-	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241122065919-170cca800661 // indirect
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241122082317-e9dd1015bf89 // indirect
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241122082317-e9dd1015bf89 // indirect
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241122082317-e9dd1015bf89 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
