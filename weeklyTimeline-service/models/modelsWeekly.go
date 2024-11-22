@@ -88,7 +88,6 @@ func (mt *MeetingSchedule) ToExcelRow() []interface{} {
 	}
 
 	return []interface{}{
-		helper.GetValue(mt.Hari),
 		tanggalStr,
 		helper.GetValue(mt.Perihal),
 		helper.GetValue(mt.Waktu),
