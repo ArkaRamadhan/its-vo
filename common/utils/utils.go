@@ -186,39 +186,67 @@ func GetFilesByID(c *gin.Context, baseDir string) {
 }
 
 func DeleteFileHandler(c *gin.Context, mainDir string) {
-	encodedFilename := c.Param("filename")
-	filename, err := url.QueryUnescape(encodedFilename)
-	if err != nil {
-		log.Printf("Error decoding filename: %v", err)
-		RespondError(c, http.StatusBadRequest, "Invalid filename")
-		return
-	}
+    encodedFilename := c.Param("filename")
+    filename, err := url.QueryUnescape(encodedFilename)
+    if err != nil {
+        log.Printf("Error decoding filename: %v", err)
+        RespondError(c, http.StatusBadRequest, "Invalid filename")
+        return
+    }
 
-	id := c.Param("id")
-	log.Printf("Received ID: %s and Filename: %s", id, filename) // Tambahkan log ini
+    id := c.Param("id")
+    log.Printf("Received ID: %s and Filename: %s", id, filename)
 
-	baseDir := mainDir
-	fullPath := filepath.Join(baseDir, id, filename)
+    baseDir := mainDir
+    fullPath := filepath.Join(baseDir, id, filename)
+    dirPath := filepath.Join(baseDir, id) // Path ke folder ID
 
-	log.Printf("Attempting to delete file at path: %s", fullPath)
+    log.Printf("Attempting to delete file at path: %s", fullPath)
 
-	// Hapus file dari sistem file
-	err = os.Remove(fullPath)
-	if err != nil {
-		log.Printf("Error deleting file: %v", err)
-		RespondError(c, http.StatusInternalServerError, "Failed to delete file")
-		return
-	}
+    // Hapus file dari sistem file
+    err = os.Remove(fullPath)
+    if err != nil {
+        log.Printf("Error deleting file: %v", err)
+        RespondError(c, http.StatusInternalServerError, "Failed to delete file")
+        return
+    }
 
-	// Hapus metadata file dari database
-	result := initializers.DB.Table("common.files").Where("file_path = ?", fullPath).Delete(&models.File{})
-	if result.Error != nil {
-		log.Printf("Error deleting file metadata: %v", result.Error)
-		RespondError(c, http.StatusInternalServerError, "Failed to delete file metadata")
-		return
-	}
+    // Hapus metadata file dari database
+    result := initializers.DB.Table("common.files").Where("file_path = ?", fullPath).Delete(&models.File{})
+    if result.Error != nil {
+        log.Printf("Error deleting file metadata: %v", result.Error)
+        RespondError(c, http.StatusInternalServerError, "Failed to delete file metadata")
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
+    // Cek apakah folder kosong dan hapus jika kosong
+    entries, err := os.ReadDir(dirPath)
+    if err != nil {
+        log.Printf("Error reading directory %s: %v", dirPath, err)
+    } else {
+        if len(entries) == 0 {
+            log.Printf("Directory is empty, attempting to delete: %s", dirPath)
+            if err := os.Remove(dirPath); err != nil {
+                log.Printf("Error deleting empty directory %s: %v", dirPath, err)
+            } else {
+                log.Printf("Successfully deleted empty directory: %s", dirPath)
+            }
+        } else {
+            log.Printf("Directory not empty, contains %d files", len(entries))
+            for _, entry := range entries {
+                log.Printf("Remaining file: %s", entry.Name())
+            }
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "File deleted successfully",
+        "path": fullPath,
+        "directory_status": map[string]interface{}{
+            "path": dirPath,
+            "deleted": len(entries) == 0,
+        },
+    })
 }
 
 func DownloadFileHandler(c *gin.Context, mainDir string) {
@@ -341,6 +369,26 @@ func ParseFlexibleDate(dateStr string, formats []string) (*time.Time, error) {
 
 func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interface{}, modelName string) {
 	id := c.Params.ByName("id")
+	var files []models.File
+	if err := initializers.DB.Table("common.files").Where("user_id = ?", id).Find(&files).Error; err != nil {
+		log.Printf("Error getting files: %v", err)
+	}
+
+	baseDir := filepath.Join("C:", "UploadedFile", modelName, id)
+
+    if _, err := os.Stat(baseDir); !os.IsNotExist(err) {
+        // Hapus file dari database
+        if err := initializers.DB.Table("common.files").Where("user_id = ?", id).Delete(&models.File{}).Error; err != nil {
+            log.Printf("Error saat menghapus record file dari database: %v", err)
+        }
+
+        // Hapus direktori dan semua isinya
+        if err := os.RemoveAll(baseDir); err != nil {
+            log.Printf("Error saat menghapus direktori: %v", err)
+        } else {
+            log.Printf("Berhasil menghapus direktori: %s", baseDir)
+		}
+	}
 
 	if err := db.Table(schema).First(model, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": modelName + " tidak ditemukan"})
