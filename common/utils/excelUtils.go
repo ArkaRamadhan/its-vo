@@ -592,29 +592,35 @@ func setMonthData(f *excelize.File, sheet, month string, rowOffset, colOffset in
 				// Cek apakah ada event pada hari ini
 				for _, event := range events {
 					var startDate, endDate time.Time
+
+					startDate = time.Date(
+						event.GetStart().Year(),
+						event.GetStart().Month(),
+						event.GetStart().Day(),
+						0, 0, 0, 0,
+						loc,
+					)
+
 					if event.GetAllDay() {
-
-						startDate, err = time.ParseInLocation("2006-01-02", event.GetStart().Format("2006-01-02"), loc)
-						if err != nil {
-							fmt.Printf("Error parsing start date: %v\n", err)
-							continue
-						}
-						endDate = startDate
-
+						// Untuk event AllDay, kurangi 1 hari dari tanggal akhir
+						endDate = time.Date(
+							event.GetEnd().Year(),
+							event.GetEnd().Month(),
+							event.GetEnd().Day(),
+							0, 0, 0, 0,
+							loc,
+						).AddDate(0, 0, -1) // Kurangi 1 hari
 					} else {
-
-						startDate, err = time.ParseInLocation("2006-01-02", event.GetStart().Format("2006-01-02"), loc)
-						if err != nil {
-							fmt.Printf("Error parsing start date: %v\n", err)
-							continue
-						}
-						endDate, err = time.ParseInLocation("2006-01-02", event.GetEnd().Format("2006-01-02"), loc)
-						if err != nil {
-							fmt.Printf("Error parsing end date: %v\n", err)
-							continue
-						}
-
+						// Untuk event non-AllDay, gunakan tanggal akhir normal
+						endDate = time.Date(
+							event.GetEnd().Year(),
+							event.GetEnd().Month(),
+							event.GetEnd().Day(),
+							0, 0, 0, 0,
+							loc,
+						)
 					}
+
 					currentDate := time.Date(monthTime.Year(), monthTime.Month(), day, 0, 0, 0, 0, loc) // Pastikan waktu diatur ke 00:00:00
 
 					// Periksa apakah currentDate sama dengan startDate atau berada di antara startDate dan endDate

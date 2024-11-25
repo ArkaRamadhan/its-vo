@@ -4,10 +4,10 @@ go 1.23.2
 
 require (
 	github.com/arkaramadhan/its-vo/dokumen-service v0.0.0-20241122032625-f42a54ea18d8
-	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241122032625-f42a54ea18d8
-	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241122032625-f42a54ea18d8
-	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241122032625-f42a54ea18d8
-	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241122032625-f42a54ea18d8
+	github.com/arkaramadhan/its-vo/informasi-service v0.0.0-20241125010342-bb8cffac6832
+	github.com/arkaramadhan/its-vo/kegiatan-service v0.0.0-20241125012933-ca85ccee9aaf
+	github.com/arkaramadhan/its-vo/project-service v0.0.0-20241125010342-bb8cffac6832
+	github.com/arkaramadhan/its-vo/weeklyTimeline-service v0.0.0-20241125010342-bb8cffac6832
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
