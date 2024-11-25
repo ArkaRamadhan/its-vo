@@ -27,12 +27,6 @@ func GetEventsDesktop(c *gin.Context) {
 func CreateEventDesktop(c *gin.Context) {
 	var event models.TimelineDesktop
 	if err := c.ShouldBindJSON(&event); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-
-	var resource models.ResourceDesktop
-	if err := initializers.DB.Table("kegiatan.resource_desktops").First(&resource, event.ResourceId).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
@@ -44,11 +38,17 @@ func CreateEventDesktop(c *gin.Context) {
 		return
 	}
 
-	// Ubah format parsing sesuai dengan format yang diterima
-	startTime, err := time.ParseInLocation("2006-01-02", event.Start, loc) // Ubah format di sini
+	var startTime time.Time
+	if event.AllDay {
+		// Jika AllDay = true, set waktu ke tengah malam
+		startTime, err = time.ParseInLocation("2006-01-02T15:04:05", event.Start+"T00:00:00", loc)
+	} else {
+		// Jika tidak, parse dengan format RFC3339
+		startTime, err = time.ParseInLocation(time.RFC3339, event.Start, loc)
+	}
+
 	if err != nil {
 		log.Printf("Error parsing start time: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Error parsing start time"})
 		return
 	}
 
@@ -83,43 +83,6 @@ func DeleteEventDesktop(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// Resources
-
-// GetResources retrieves all resources
-func GetResourcesDesktop(c *gin.Context) {
-	var resources []models.ResourceDesktop
-	if err := initializers.DB.Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, resources)
-}
-
-// CreateResource creates a new resource
-func CreateResourceDesktop(c *gin.Context) {
-	var resource models.ResourceDesktop
-	if err := c.ShouldBindJSON(&resource); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-
-	if err := initializers.DB.Create(&resource).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, resource)
-}
-
-// DeleteResource deletes a resource by ID
-func DeleteResourceDesktop(c *gin.Context) {
-	id := c.Param("id")
-	if err := initializers.DB.Where("id = ?", id).Delete(&models.ResourceDesktop{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-	c.Status(http.StatusNoContent)
-}
-
 func ExportTimelineDesktopHandler(c *gin.Context) {
 	var f *excelize.File
 	ExportTimelineDesktopToExcel(c, f, "TIMELINE DESKTOP", true)
@@ -132,17 +95,6 @@ func ExportTimelineDesktopToExcel(c *gin.Context, f *excelize.File, sheetName st
 		return err
 	}
 
-	var resources []models.ResourceDesktop
-	if err := initializers.DB.Table("kegiatan.resource_desktops").Find(&resources).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return err
-	}
-
-	resourceMap := make(map[uint]string)
-	for _, resource := range resources {
-		resourceMap[resource.ID] = resource.Name
-	}
-
 	var excelEvents []helper.ExcelEvent
 	for _, event := range events_timeline {
 		excelEvents = append(excelEvents, event) // Pastikan `event` adalah tipe yang mengimplementasikan `ExcelEvent`
@@ -152,8 +104,7 @@ func ExportTimelineDesktopToExcel(c *gin.Context, f *excelize.File, sheetName st
 		SheetName:   "TIMELINE DESKTOP",
 		FileName:    "its_report_timelineDesktop.xlsx",
 		Events:      excelEvents,
-		UseResource: true,
-		ResourceMap: resourceMap,
+		UseResource: false,
 		RowOffset:   0,
 		ColOffset:   0,
 	}

@@ -17,7 +17,6 @@ func main() {
 
 	initializers.DB.AutoMigrate(
 		&models.TimelineDesktop{},
-		&models.ResourceDesktop{},
 		&models.BookingRapat{},
 		&models.JadwalRapat{},
 		&models.JadwalCuti{},

@@ -222,9 +222,9 @@ type TimelineDesktop struct {
 	ID         uint   `gorm:"primaryKey" json:"id"`
 	Start      string `json:"start"`
 	End        string `json:"end"`
-	ResourceId int    `json:"resourceId"` // Ubah tipe data dari string ke int
 	Title      string `json:"title"`
-	BgColor    string `json:"bgColor"`
+	Color      string `json:"color"`
+	AllDay     bool   `json:"allDay"`
 }
 
 func (TimelineDesktop) TableName() string {
@@ -246,21 +246,15 @@ func (e TimelineDesktop) GetEnd() time.Time {
 }
 
 func (e TimelineDesktop) GetColor() string {
-	return e.BgColor
+	return e.Color
 }
 
 func (e TimelineDesktop) GetResourceID() uint {
-	return uint(e.ResourceId)
+	return 0
 }
 
 func (e TimelineDesktop) GetAllDay() bool {
-	return false
-}
-
-type ResourceDesktop struct {
-	ID       uint   `gorm:"primaryKey" json:"id"`
-	Name     string `json:"name"`
-	ParentID uint   `json:"parent_id"`
+	return e.AllDay
 }
 
 type ConflictRequest struct {

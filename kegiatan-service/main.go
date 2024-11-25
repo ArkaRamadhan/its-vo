@@ -45,9 +45,6 @@ func main() {
 	r.GET("/timelineDesktop", controllers.GetEventsDesktop)
 	r.POST("/timelineDesktop", controllers.CreateEventDesktop)
 	r.DELETE("/timelineDesktop/:id", controllers.DeleteEventDesktop)
-	r.GET("/resourceDesktop", controllers.GetResourcesDesktop)
-	r.POST("/resourceDesktop", controllers.CreateResourceDesktop)
-	r.DELETE("/resourceDesktop/:id", controllers.DeleteResourceDesktop)
 	r.GET("/exportTimelineDesktop", controllers.ExportTimelineDesktopHandler)
 
 	// ********** Route Booking Rapat ********** //
