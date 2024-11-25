@@ -236,13 +236,23 @@ func (e TimelineDesktop) GetTitle() string {
 }
 
 func (e TimelineDesktop) GetStart() time.Time {
-	t, _ := time.Parse("2006-01-02 15:04:05", e.Start) // Tambahkan penanganan error yang sesuai
-	return t
+	if e.AllDay {
+		t, _ := time.Parse("2006-01-02", e.Start)
+		return t
+	} else {
+		t, _ := time.Parse(time.RFC3339, e.Start) // Tambahkan penanganan error yang sesuai
+		return t
+	}
 }
 
 func (e TimelineDesktop) GetEnd() time.Time {
-	t, _ := time.Parse("2006-01-02 15:04:05", e.End) // Tambahkan penanganan error yang sesuai
-	return t
+	if e.AllDay {
+		t, _ := time.Parse("2006-01-02", e.End)
+		return t
+	} else {
+		t, _ := time.Parse(time.RFC3339, e.End) // Tambahkan penanganan error yang sesuai
+		return t
+	}
 }
 
 func (e TimelineDesktop) GetColor() string {
