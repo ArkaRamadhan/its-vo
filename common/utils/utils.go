@@ -284,6 +284,7 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 	currentYear := time.Now().Year()
 	docType = strings.TrimSpace(strings.ToLower(docType))
 	var searchPattern string
+	var newNumber string
 	if docType == "perdin" {
 		searchPattern = fmt.Sprintf("%%/%s/%d", category, currentYear)
 	} else {
@@ -336,7 +337,8 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 		newNumber = fmt.Sprintf("%05d/%s/%d", num+1, category, currentYear)
 	} else {
 		newNumber = fmt.Sprintf("%05d/ITS-%s/%s/%d", num+1, category, docType, currentYear)
-	}
+    }
+	
 	log.Printf("Berhasil generate nomor baru: %s", newNumber)
 	return newNumber, nil
 }
