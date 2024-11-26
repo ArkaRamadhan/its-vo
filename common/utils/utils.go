@@ -332,7 +332,11 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 		return "", fmt.Errorf("gagal mengkonversi nomor: %v", err)
 	}
 
-	newNumber := fmt.Sprintf("%05d/ITS-%s/%s/%d", num+1, category, docType, currentYear)
+	if docType == "perdin" {
+		newNumber = fmt.Sprintf("%05d/%s/%d", num+1, category, currentYear)
+	} else {
+		newNumber = fmt.Sprintf("%05d/ITS-%s/%s/%d", num+1, category, docType, currentYear)
+	}
 	log.Printf("Berhasil generate nomor baru: %s", newNumber)
 	return newNumber, nil
 }
