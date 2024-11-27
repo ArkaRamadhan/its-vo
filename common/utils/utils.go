@@ -282,7 +282,6 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 // GetLatestDocumentNumber menghasilkan nomor dokumen berikutnya berdasarkan kategori dan tipe dokumen
 func GetLatestDocumentNumber(category, docType string, model interface{}, dbField, structField string, schema string) (string, error) {
 	currentYear := time.Now().Year()
-	docType = strings.TrimSpace(strings.ToLower(docType))
 	var searchPattern string
 	var newNumber string
 	if docType == "perdin" {
@@ -300,7 +299,6 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// Ini bukan error, ini expected behavior untuk dokumen pertama
 			var newNumber string
-			docType = strings.TrimSpace(strings.ToLower(docType))
 			if docType == "perdin" {
 				newNumber = fmt.Sprintf("00001/%s/%d", category, currentYear)
 			} else {
