@@ -280,7 +280,7 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 // ********** FUNC GET LATEST NUMBER ********** //
 
 func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, dbField string) (string, error) {
-    var maxNumber string
+    var maxNumber *string
     currentYear := time.Now().Year()
     likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
 
@@ -293,12 +293,12 @@ func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, 
         return "", err
     }
 
-    // Menangani kasus di mana belum ada data
-    if maxNumber == "" {
-        maxNumber = "00000" // Atau nilai default lain yang sesuai dengan kebutuhan Anda
+    // Menangani kasus di mana hasilnya NULL (maxNumber akan nil)
+    if maxNumber == nil {
+        return "00001", nil
     }
 
-    return maxNumber, nil
+    return *maxNumber, nil
 }
 
 // GetLatestDocumentNumber menghasilkan nomor dokumen berikutnya berdasarkan kategori dan tipe dokumen
