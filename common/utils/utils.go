@@ -279,14 +279,14 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 
 // ********** FUNC GET LATEST NUMBER ********** //
 
-func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string) (string, error) {
+func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string , dbField string) (string, error) {
     var maxNumber string
     currentYear := time.Now().Year()
     likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
 
     err := db.Table(schema).
         Select("MAX(SUBSTRING_INDEX(SUBSTRING_INDEX(document_field, '/', 1), '/', -1)) as max_number").
-        Where("document_field LIKE ?", likePattern).
+        Where(fmt.Sprintf("%s LIKE ?", dbField), likePattern).
         Take(&maxNumber).Error
 
     if err != nil {
@@ -302,7 +302,7 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 	var searchPattern string
 	var newNumber string
 
-	maxNumber, err := GetMaxDocumentNumber(initializers.DB, category, docType, schema)
+	maxNumber, err := GetMaxDocumentNumber(initializers.DB, category, docType, schema, dbField)
     if err != nil {
         return "", err
     }
