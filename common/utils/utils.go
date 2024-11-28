@@ -279,17 +279,39 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 
 // ********** FUNC GET LATEST NUMBER ********** //
 
+func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string) (string, error) {
+    var maxNumber string
+    currentYear := time.Now().Year()
+    likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
+
+    err := db.Table(schema).
+        Select("MAX(SUBSTRING_INDEX(SUBSTRING_INDEX(document_field, '/', 1), '/', -1)) as max_number").
+        Where("document_field LIKE ?", likePattern).
+        Take(&maxNumber).Error
+
+    if err != nil {
+        return "", err
+    }
+
+    return maxNumber, nil
+}
+
 // GetLatestDocumentNumber menghasilkan nomor dokumen berikutnya berdasarkan kategori dan tipe dokumen
 func GetLatestDocumentNumber(category, docType string, model interface{}, dbField, structField string, schema string) (string, error) {
 	currentYear := time.Now().Year()
 	var searchPattern string
 	var newNumber string
 
+	maxNumber, err := GetMaxDocumentNumber(initializers.DB, category, docType, schema)
+    if err != nil {
+        return "", err
+    }
+
 	// Menentukan pola pencarian berdasarkan tipe dokumen
 	if docType == "perdin" {
 		searchPattern = fmt.Sprintf("%%/%s/%d", category, currentYear)
 	} else {
-		searchPattern = fmt.Sprintf("%%/ITS-%s/%s/%d", category, docType, currentYear)
+		searchPattern = fmt.Sprintf("%s/ITS-%s/%s/%d", maxNumber, category, docType, currentYear)
 	}
 
 	result := initializers.DB.Table(schema).
