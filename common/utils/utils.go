@@ -285,7 +285,7 @@ func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string ,
     likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
 
     err := db.Table(schema).
-        Select("MAX(SUBSTRING_INDEX(SUBSTRING_INDEX(document_field, '/', 1), '/', -1)) as max_number").
+        Select(fmt.Sprintf("MAX(SUBSTRING_INDEX(SUBSTRING_INDEX(%s, '/', 1), '/', -1)) as max_number", dbField)).
         Where(fmt.Sprintf("%s LIKE ?", dbField), likePattern).
         Take(&maxNumber).Error
 
