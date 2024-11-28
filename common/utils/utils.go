@@ -279,18 +279,23 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 
 // ********** FUNC GET LATEST NUMBER ********** //
 
-func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string , dbField string) (string, error) {
+func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, dbField string) (string, error) {
     var maxNumber string
     currentYear := time.Now().Year()
     likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
 
-    err := db.Table(schema).
-        Select(fmt.Sprintf("MAX(SUBSTRING_INDEX(SUBSTRING_INDEX(%s, '/', 1), '/', -1)) as max_number", dbField)).
-        Where(fmt.Sprintf("%s LIKE ?", dbField), likePattern).
-        Take(&maxNumber).Error
+    // Menggunakan SPLIT_PART untuk PostgreSQL
+    query := fmt.Sprintf("SELECT MAX(SPLIT_PART(%s, '/', 1)) as max_number FROM %s WHERE %s LIKE ?", dbField, schema, dbField)
+
+    err := db.Raw(query, likePattern).Scan(&maxNumber).Error
 
     if err != nil {
         return "", err
+    }
+
+    // Menangani kasus di mana belum ada data
+    if maxNumber == "" {
+        maxNumber = "00000" // Atau nilai default lain yang sesuai dengan kebutuhan Anda
     }
 
     return maxNumber, nil
