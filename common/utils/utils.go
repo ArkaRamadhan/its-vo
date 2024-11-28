@@ -279,13 +279,19 @@ func DownloadFileHandler(c *gin.Context, mainDir string) {
 
 // ********** FUNC GET LATEST NUMBER ********** //
 
-func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, dbField string) (string, error) {
+func GetMaxDocumentNumber(db *gorm.DB, category, docType, schema, dbField string) (string, error) {
     var maxNumber *string
     currentYear := time.Now().Year()
-    likePattern := fmt.Sprintf("ITS-%s/%s/%d%%", category, docType, currentYear)
+    likePattern := fmt.Sprintf("%%ITS-%s/%s/%d", category, docType, currentYear)
 
-    // Menggunakan SPLIT_PART untuk PostgreSQL
-    query := fmt.Sprintf("SELECT MAX(SPLIT_PART(%s, '/', 1)) as max_number FROM %s WHERE %s LIKE ?", dbField, schema, dbField)
+    // Query untuk mendapatkan nomor maksimum (part pertama sebelum '/')
+    query := fmt.Sprintf(`
+        SELECT MAX(CAST(SPLIT_PART(%s, '/', 1) AS INT))::TEXT as max_number
+        FROM %s
+        WHERE %s LIKE ?
+    `, dbField, schema, dbField)
+
+    log.Printf("Executing query: %s with pattern: %s", query, likePattern)
 
     err := db.Raw(query, likePattern).Scan(&maxNumber).Error
     if err != nil {
@@ -293,15 +299,19 @@ func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, 
         return "", err
     }
 
-    // Menangani kasus di mana hasilnya NULL (maxNumber akan nil)
+    // Jika hasilnya NULL (tidak ada data cocok di database), kembalikan "00001"
     if maxNumber == nil || *maxNumber == "" {
         log.Printf("Tidak ada nomor maksimum yang ditemukan, mengembalikan 00001")
         return "00001", nil
     }
 
-    log.Printf("Nomor maksimum yang ditemukan: %s", *maxNumber)
-    return *maxNumber, nil
+    // Pastikan format nomor tetap lima digit dengan padding 0 di depan
+    formattedMaxNumber := fmt.Sprintf("%05s", *maxNumber)
+
+    log.Printf("Nomor maksimum yang ditemukan: %s", formattedMaxNumber)
+    return formattedMaxNumber, nil
 }
+
 
 // GetLatestDocumentNumber menghasilkan nomor dokumen berikutnya berdasarkan kategori dan tipe dokumen
 func GetLatestDocumentNumber(category, docType string, model interface{}, dbField, structField string, schema string) (string, error) {
