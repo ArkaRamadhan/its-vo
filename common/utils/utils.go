@@ -288,16 +288,18 @@ func GetMaxDocumentNumber(db *gorm.DB, category, docType string, schema string, 
     query := fmt.Sprintf("SELECT MAX(SPLIT_PART(%s, '/', 1)) as max_number FROM %s WHERE %s LIKE ?", dbField, schema, dbField)
 
     err := db.Raw(query, likePattern).Scan(&maxNumber).Error
-
     if err != nil {
+        log.Printf("Error saat query max number: %v", err)
         return "", err
     }
 
     // Menangani kasus di mana hasilnya NULL (maxNumber akan nil)
-    if maxNumber == nil {
+    if maxNumber == nil || *maxNumber == "" {
+        log.Printf("Tidak ada nomor maksimum yang ditemukan, mengembalikan 00001")
         return "00001", nil
     }
 
+    log.Printf("Nomor maksimum yang ditemukan: %s", *maxNumber)
     return *maxNumber, nil
 }
 
