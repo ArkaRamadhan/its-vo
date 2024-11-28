@@ -284,10 +284,12 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 	currentYear := time.Now().Year()
 	var searchPattern string
 	var newNumber string
+
+	// Menentukan pola pencarian berdasarkan tipe dokumen
 	if docType == "perdin" {
 		searchPattern = fmt.Sprintf("%%/%s/%d", category, currentYear)
 	} else {
-		searchPattern = fmt.Sprintf("%%/ITS-%s/%s/%d", category, docType, currentYear) // Ini akan mencari format seperti '%/ITS-SAG/M/2023", category, docType)
+		searchPattern = fmt.Sprintf("%%/ITS-%s/%s/%d", category, docType, currentYear)
 	}
 
 	result := initializers.DB.Table(schema).
@@ -297,29 +299,34 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// Ini bukan error, ini expected behavior untuk dokumen pertama
-			var newNumber string
+			// Jika tidak ada dokumen yang ditemukan, mulai dari nomor pertama
 			if docType == "perdin" {
 				newNumber = fmt.Sprintf("00001/%s/%d", category, currentYear)
 			} else {
 				newNumber = fmt.Sprintf("00001/ITS-%s/%s/%d", category, docType, currentYear)
 			}
+			log.Printf("Tidak ada dokumen yang ditemukan untuk %s, memulai penomoran baru: %s", docType, newNumber)
 			return newNumber, nil
 		}
-		// Ini baru error yang sebenarnya
+		// Error sebenarnya dari database
+		log.Printf("Error saat query database: %v", result.Error)
 		return "", fmt.Errorf("error saat query database: %v", result.Error)
 	}
 
 	val := reflect.ValueOf(model).Elem()
 	numberField := val.FieldByName(structField)
 	if !numberField.IsValid() || numberField.IsNil() {
+		log.Printf("Field %s tidak ditemukan atau nil dalam model", structField)
 		return "", fmt.Errorf("field %s tidak ditemukan atau nil", structField)
 	}
 
 	lastNumber := numberField.Interface().(*string)
 	if lastNumber == nil {
+		log.Printf("Nomor dokumen terakhir adalah nil")
 		return "", fmt.Errorf("nomor dokumen terakhir adalah nil")
 	}
+
+	log.Printf("Nomor dokumen terakhir yang diambil: %s", *lastNumber)
 
 	parts := strings.Split(*lastNumber, "/")
 	if len(parts) < 1 {
@@ -336,8 +343,9 @@ func GetLatestDocumentNumber(category, docType string, model interface{}, dbFiel
 	} else {
 		newNumber = fmt.Sprintf("%05d/ITS-%s/%s/%d", num+1, category, docType, currentYear)
     }
-	
-	log.Printf("Berhasil generate nomor baru: %s", newNumber)
+
+	log.Printf("Nomor dokumen baru yang dihasilkan: %s", newNumber)
+
 	return newNumber, nil
 }
 
@@ -356,7 +364,7 @@ func ShowRecord[T any](c *gin.Context, db *gorm.DB, id string, data *T, successM
 		c.JSON(http.StatusNotFound, gin.H{"message": "record tidak ditemukan"})
 		return
 	}
-	log.Printf("Data retrieved: %+v", data) // Tambahkan log ini untuk melihat data yang diambil
+
 	c.JSON(http.StatusOK, data)
 }
 
@@ -383,12 +391,10 @@ func DeleteRecordByID(c *gin.Context, db *gorm.DB, schema string, model interfac
 	// Gunakan UPLOAD_DIR dari environment variable
 	uploadDir := os.Getenv("UPLOAD_DIR")
 	if uploadDir == "" {
-		log.Printf("Warning: UPLOAD_DIR tidak diatur, menggunakan path default")
 		uploadDir = "/app/UploadedFile"
 	}
 	
 	baseDir := filepath.Join(uploadDir, modelName, id)
-	log.Printf("Mencoba menghapus direktori: %s", baseDir)
 
 	if _, err := os.Stat(baseDir); !os.IsNotExist(err) {
 		// Hapus file dari database terlebih dahulu
