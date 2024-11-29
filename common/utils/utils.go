@@ -125,7 +125,7 @@ func ParseDate(dateStr *string) (*time.Time, error) {
 
 // ********** FUNC UPLOAD FILE *********** //
 
-func UploadHandler(c *gin.Context, baseDir string) {
+func UploadHandler(c *gin.Context, baseDir string) { 
 	// mantap min
 	id := c.PostForm("id")
 	file, err := c.FormFile("file")
